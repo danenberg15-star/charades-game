@@ -7,8 +7,13 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
   const me = roomData.players.find((p: any) => p.id === userId);
 
   const myDisplayScore = useMemo(() => {
-    return roomData.gameMode === 'individual' ? (roomData.totalScores[me?.name] || 0) : (roomData.totalScores[roomData.teamNames[me?.teamIdx]] || 0);
-  }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
+    if (roomData.gameMode === 'individual') {
+      return roomData.totalScores[me?.name] || 0;
+    } else {
+      const myTeamName = roomData.teamNames[me?.teamIdx];
+      return roomData.totalScores[myTeamName] || 0;
+    }
+  }, [roomData.totalScores, roomData.gameMode, me]);
 
   const wordData = useMemo(() => {
     const age = parseInt(currentP.age) || 21;
@@ -33,8 +38,15 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
   if (!isIDescriber) {
     return (
       <div style={s.layout}>
-        <div style={s.header}><div style={s.scoreBox}>🏆 {myDisplayScore}</div><div style={s.timer}>{roomData.timeLeft}</div><button onClick={onExit} style={s.icon}>✕</button></div>
-        <div style={{ textAlign: 'center', marginTop: '80px' }}><h2 style={{ color: '#ffd700', fontSize: '2rem' }}>{currentP.name} מתאר/ת...</h2><p style={{ opacity: 0.7 }}>היו מוכנים לנחש!</p></div>
+        <div style={s.header}>
+          <div style={s.scoreBox}>🏆 {myDisplayScore}</div>
+          <div style={s.timer}>{roomData.timeLeft}</div>
+          <button onClick={onExit} style={s.icon}>✕</button>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '80px' }}>
+          <h2 style={{ color: '#ffd700', fontSize: '2rem' }}>{currentP.name} מתאר/ת...</h2>
+          <p style={{ opacity: 0.7 }}>היו מוכנים לנחש!</p>
+        </div>
       </div>
     );
   }
@@ -42,8 +54,12 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
   return (
     <div style={s.layout}>
       <div style={s.header}>
-        <div style={s.scoreBox}>🏆 {myDisplayScore}</div><div style={s.timer}>{roomData.timeLeft}</div>
-        <div style={{ display: 'flex', gap: '15px' }}><button onClick={() => updateRoom({ isPaused: !roomData.isPaused })} style={s.icon}>{roomData.isPaused ? '▶️' : '⏸️'}</button><button onClick={onExit} style={s.icon}>✕</button></div>
+        <div style={s.scoreBox}>🏆 {myDisplayScore}</div>
+        <div style={s.timer}>{roomData.timeLeft}</div>
+        <div style={{ display: 'flex', gap: '15px' }}>
+          <button onClick={() => updateRoom({ isPaused: !roomData.isPaused })} style={s.icon}>{roomData.isPaused ? '▶️' : '⏸️'}</button>
+          <button onClick={onExit} style={s.icon}>✕</button>
+        </div>
       </div>
       <button onClick={() => handleAction("SKIP")} style={s.skip}>דלג (1-)</button>
       <div style={s.center}>
