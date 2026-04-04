@@ -12,7 +12,7 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// עדכון המאגרים כך שכולם יכילו סלבריטאים במקום מילים
+// הפונקציה מחזירה כעת את מאגר הסלבס לכל הקטגוריות כדי לשמור על תאימות למכניקה הקיימת
 export const getInitialShuffledPools = () => {
   const shuffled = shuffleArray(CELEBRITIES);
   return {
