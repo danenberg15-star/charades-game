@@ -1,7 +1,4 @@
-import { KIDS_WORDS } from "./words/kids";
-import { JUNIOR_WORDS } from "./words/junior";
-import { TEEN_WORDS } from "./words/teen";
-import { ADULT_WORDS } from "./words/adult";
+import { CELEBRITIES } from "./words/celebrities";
 
 // יצירת קוד חדר המורכב מ-4 ספרות בדיוק (1000-9999)
 export const generateRoomCode = () => Math.floor(1000 + Math.random() * 9000).toString();
@@ -15,9 +12,13 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-export const getInitialShuffledPools = () => ({
-  KIDS: shuffleArray(KIDS_WORDS),
-  JUNIOR: shuffleArray(JUNIOR_WORDS),
-  TEEN: shuffleArray(TEEN_WORDS),
-  ADULT: shuffleArray(ADULT_WORDS)
-});
+// עדכון המאגרים כך שכולם יכילו סלבריטאים במקום מילים
+export const getInitialShuffledPools = () => {
+  const shuffled = shuffleArray(CELEBRITIES);
+  return {
+    KIDS: shuffled,
+    JUNIOR: shuffled,
+    TEEN: shuffled,
+    ADULT: shuffled
+  };
+};
