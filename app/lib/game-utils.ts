@@ -1,6 +1,5 @@
 import { CELEBRITIES } from "./words/celebrities";
 
-// יצירת קוד חדר המורכב מ-4 ספרות בדיוק (1000-9999)
 export const generateRoomCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 export const shuffleArray = (array: any[]) => {
@@ -12,13 +11,9 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// הפונקציה מחזירה כעת את מאגר הסלבס לכל הקטגוריות כדי לשמור על תאימות למכניקה הקיימת
-export const getInitialShuffledPools = () => {
-  const shuffled = shuffleArray(CELEBRITIES);
-  return {
-    KIDS: shuffled,
-    JUNIOR: shuffled,
-    TEEN: shuffled,
-    ADULT: shuffled
-  };
-};
+export const getInitialShuffledPools = () => ({
+  KIDS: shuffleArray(CELEBRITIES),
+  JUNIOR: shuffleArray(CELEBRITIES),
+  TEEN: shuffleArray(CELEBRITIES),
+  ADULT: shuffleArray(CELEBRITIES)
+});

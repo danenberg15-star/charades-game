@@ -17,7 +17,7 @@ export default function FamilyAliasApp() {
   const currentP = roomData?.players?.[roomData?.currentTurnIdx];
   const isIDescriber = currentP?.id === userId;
 
-  // לוגיקת בחירת המאגר - מסונכרנת לכל רמות הקושי (ב-Charades כולם מקבלים סלבס)
+  // לוגיקת בחירת המאגר - מסונכרנת לכל רמות הקושי
   const calculatePoolKey = (age: number, idxs: any, difficulty: string) => {
     const totalIdx = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT);
     
@@ -140,7 +140,6 @@ export default function FamilyAliasApp() {
     }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
       {step === 1 && <EntryStep onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} onSetAge={setUserAge} />}
-      
       {step === 3 && roomData && (
         <SetupStep 
           roomId={roomId!} gameMode={roomData.gameMode} setGameMode={(m) => updateRoom({ gameMode: m })} 
