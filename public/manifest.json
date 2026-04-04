@@ -1,0 +1,22 @@
+{
+  "name": "מילה נרדפת - SAME-SAME",
+  "short_name": "SAME-SAME",
+  "description": "משחק אוצר מילים משפחתי ומאתגר",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#05081c",
+  "theme_color": "#05081c",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
