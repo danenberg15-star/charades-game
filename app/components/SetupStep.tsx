@@ -63,12 +63,12 @@ export default function SetupStep(props: SetupStepProps) {
     props.setNumTeams(props.numTeams - 1);
   };
 
-  const hasEmptyTeam = Array.from({ length: props.numTeams }).some((_, i) => 
-    props.players.filter(p => p.teamIdx === i).length === 0
-  );
-
   const canStart = Array.from({ length: props.numTeams }).every((_, i) => 
     props.players.filter(p => p.teamIdx === i).length >= 2
+  );
+
+  const hasEmptyTeam = Array.from({ length: props.numTeams }).some((_, i) => 
+    props.players.filter(p => p.teamIdx === i).length === 0
   );
 
   const handlePointerMove = (e: React.PointerEvent) => {
@@ -103,8 +103,8 @@ export default function SetupStep(props: SetupStepProps) {
         height: '100dvh',
         width: '100vw',
         maxWidth: '100%',
-        gap: '15px',
-        padding: '20px',
+        gap: '12px',
+        padding: '15px',
         margin: '0 auto',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -120,7 +120,7 @@ export default function SetupStep(props: SetupStepProps) {
     >
       <button onClick={props.onExit} style={{...styles.exitBtnRed, zIndex: 10, top: '20px', left: '20px'}}>✕</button>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flexShrink: 0 }}>
         <h1 style={{ color: 'white', fontSize: '1.2rem', margin: 0, fontWeight: 'bold' }}>הגדרות חדר</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: 'rgba(255,255,255,0.05)', padding: '5px 15px', borderRadius: '20px', border: '1px solid rgba(0, 242, 255, 0.2)' }}>
           <span style={{ color: 'white', fontSize: '1rem' }}>קוד:</span>
@@ -131,7 +131,9 @@ export default function SetupStep(props: SetupStepProps) {
         </div>
       </div>
 
-      {/* Grid container with fixed spacing and no-overlap guards */}
+      <div style={{ height: '5px', flexShrink: 0 }}></div> 
+
+      {/* Grid של קבוצות - פתרון חפיפה באמצעות min-height: 0 */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: '1fr 1fr',
@@ -162,7 +164,8 @@ export default function SetupStep(props: SetupStepProps) {
                 minWidth: 0,
                 minHeight: 0,
                 boxSizing: 'border-box',
-                position: 'relative'
+                position: 'relative',
+                overflow: 'hidden'
               }}
             >
               <div style={{ padding: '8px', textAlign: 'center', fontSize: '0.85rem', color: '#00f2ff', fontWeight: 'bold', borderBottom: '1px solid rgba(0, 242, 255, 0.1)', flexShrink: 0 }}>
@@ -182,7 +185,7 @@ export default function SetupStep(props: SetupStepProps) {
                   </div>
                 ))}
                 {props.numTeams > 2 && teamPlayers.length === 0 && (
-                  <button onClick={() => handleRemoveTeam(tIdx)} style={{...styles.minusBtnCentered, margin: '5px auto', color: '#ef4444', borderColor: '#ef4444', position: 'relative', top: 0, left: 0, transform: 'none'}}>-</button>
+                  <button onClick={() => handleRemoveTeam(tIdx)} style={{...styles.minusBtnCentered, margin: '5px auto', color: '#ef4444', borderColor: '#ef4444', position: 'relative', transform: 'none'}}>-</button>
                 )}
               </div>
             </div>
