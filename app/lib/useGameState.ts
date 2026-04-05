@@ -8,21 +8,19 @@ export function useGameState() {
   const [userId, setUserId] = useState("");
   const [roomId, setRoomId] = useState<string | null>(null);
   const [roomData, setRoomData] = useState<any>(null);
-  const [step, setStep] = useState(0); // שונה מ-1 ל-0 כדי להתחיל מהחוקים
+  const [step, setStep] = useState(0); 
   const [userName, setUserName] = useState("");
-  const [userAge, setUserAge] = useState("");
 
   useEffect(() => {
     setMounted(true);
     const id = localStorage.getItem("alias_userId") || "u_" + Math.random().toString(36).substring(2, 9);
     setUserId(id); localStorage.setItem("alias_userId", id);
     const n = localStorage.getItem("alias_userName");
-    const a = localStorage.getItem("alias_userAge");
-    if (n && a) { 
+    
+    if (n) { 
       setUserName(n); 
-      setUserAge(a); 
       const r = localStorage.getItem("alias_roomId"); 
-      if (r) setRoomId(r); else setStep(2); 
+      if (r) setRoomId(r); else setStep(1); 
     }
   }, []);
 
@@ -32,7 +30,6 @@ export function useGameState() {
       if (snap.exists()) {
         const d = snap.data();
         
-        // --- מנגנון ניקוי חדרים לא פעילים (5 דקות) ---
         const INACTIVITY_LIMIT = 5 * 60 * 1000; 
         if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
             if (d.players && d.players[0].id === userId) {
@@ -61,45 +58,45 @@ export function useGameState() {
 
   const handleFullReset = () => { localStorage.clear(); window.location.href = '/'; };
 
-  const handleCreateRoom = async (nameOverride?: string, ageOverride?: string) => {
-    const finalName = nameOverride || userName;
-    const finalAge = ageOverride || userAge;
+  const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
+    const finalName = payload.name;
     const id = generateRoomCode();
     
     setRoomId(id);
     setStep(3);
     localStorage.setItem("alias_roomId", id);
     localStorage.setItem("alias_userName", finalName);
-    localStorage.setItem("alias_userAge", finalAge);
 
     await setDoc(doc(db, "rooms", id), {
       id, step: 3, createdAt: Date.now(), 
       lastActivity: Date.now(), 
-      gameMode: "individual", difficulty: "age-appropriate", numTeams: 2,
-      players: [{ id: userId, name: finalName, age: finalAge, teamIdx: 0 }],
+      gameMode: "individual", difficulty: "easy", numTeams: 2,
+      // הסרת הגיל מאובייקט השחקן
+      players: [{ id: userId, name: finalName, teamIdx: 0, customWords: payload.customWords }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, timeLeft: 60, isPaused: false, currentTurnIdx: 0, 
-      poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, preGameTimer: 3, shuffledPools: {}
+      totalScores: {}, roundScore: 0, timeLeft: 45, isPaused: false, currentTurnIdx: 0, 
+      // מעבר למדד מילים יחיד
+      poolIndex: 0, preGameTimer: 3, shuffledPools: []
     });
   };
 
-  const handleJoinRoom = async (idInput: string, nameOverride?: string, ageOverride?: string) => {
-    const finalName = nameOverride || userName;
-    const finalAge = ageOverride || userAge;
+  const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
+    const finalName = payload.name;
     const id = idInput.toUpperCase();
 
+    // טיפול בחדר "עומר" למטרות טסטים
     if (id === "עומר") {
       const qp = [
-        { id: userId, name: finalName || "עומר", age: finalAge || "21", teamIdx: 0 }, 
-        ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, age: "21", teamIdx: 1 }))
+        { id: userId, name: finalName || "עומר", teamIdx: 0, customWords: payload.customWords }, 
+        ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))
       ];
       await setDoc(doc(db, "rooms", "עומר"), { 
         id: "עומר", step: 3, createdAt: Date.now(), 
         lastActivity: Date.now(), 
-        gameMode: "team", numTeams: 2, 
+        gameMode: "team", numTeams: 2, difficulty: "easy",
         players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-        timeLeft: 60, isPaused: false, currentTurnIdx: 0, 
-        poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, preGameTimer: 3, shuffledPools: {} 
+        timeLeft: 45, isPaused: false, currentTurnIdx: 0, 
+        poolIndex: 0, preGameTimer: 3, shuffledPools: [] 
       });
       setRoomId("עומר"); setStep(3); localStorage.setItem("alias_roomId", "עומר");
       return;
@@ -119,12 +116,14 @@ export function useGameState() {
       localStorage.setItem("alias_roomId", id); 
       if (data.step === 3) {
         await updateDoc(doc(db, "rooms", id), { 
-          players: arrayUnion({ id: userId, name: finalName, age: finalAge, teamIdx: 0 }),
+          players: arrayUnion({ id: userId, name: finalName, teamIdx: 0, customWords: payload.customWords }),
           lastActivity: Date.now() 
         }); 
       } 
+    } else {
+      alert("חדר לא נמצא");
     }
   };
 
-  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, userAge, setUserAge, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom };
+  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom };
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Logo from "./Logo";
 import { styles } from "../game.styles";
 
@@ -12,7 +13,7 @@ interface ScoreStepProps {
 
 export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }: ScoreStepProps) {
   return (
-    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '40px', padding: '20px', boxSizing: 'border-box'}}>
+    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '40px', padding: '20px', boxSizing: 'border-box', overflowY: 'auto'}}>
       <Logo />
       
       {phaseEnded && (
@@ -33,9 +34,20 @@ export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }:
         </div>
       )}
 
-      {!phaseEnded && <h2 style={{ color: '#00f2ff', fontSize: '24px', marginBottom: '20px', fontWeight: '900' }}>טבלת ניקוד</h2>}
+      {!phaseEnded && (
+        <h2 style={{ color: '#00f2ff', fontSize: '24px', marginBottom: '20px', fontWeight: '900' }}>
+          טבלת ניקוד
+        </h2>
+      )}
       
-      <div style={{ width: '100%', maxWidth: '400px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '24px', padding: '10px', border: '1px solid rgba(0, 242, 255, 0.1)' }}>
+      <div style={{ 
+        width: '100%', 
+        maxWidth: '400px', 
+        backgroundColor: 'rgba(255,255,255,0.05)', 
+        borderRadius: '24px', 
+        padding: '10px', 
+        border: '1px solid rgba(0, 242, 255, 0.1)' 
+      }}>
         {entities.map((entity) => (
           <div key={entity} style={{ 
             display: 'flex', 
@@ -45,19 +57,21 @@ export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }:
             color: 'white',
             alignItems: 'center'
           }}>
-            <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{entity}</span>
-            <span style={{ color: '#00f2ff', fontSize: '1.3rem', fontWeight: '900' }}>
-              {scores[entity] || 0} 🏆
+            <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{entity}</span>
+            <span style={{ fontSize: '1.4rem', color: '#00f2ff', fontWeight: '900' }}>
+              {scores[entity] || 0}
             </span>
           </div>
         ))}
       </div>
 
+      <div style={{ flex: 1 }} />
+
       <button 
-        onClick={onNextRound} 
-        style={{ ...styles.lobbyButton, marginTop: '30px', width: '90%', maxWidth: '350px' }}
+        onClick={onNextRound}
+        style={{ ...styles.lobbyButton, width: '100%', maxWidth: '400px', marginTop: '30px', marginBottom: '10px' }}
       >
-        המשך לסבב הבא ➔
+        המשך לסיבוב הבא ➔
       </button>
     </div>
   );
