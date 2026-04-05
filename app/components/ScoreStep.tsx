@@ -12,7 +12,7 @@ interface ScoreStepProps {
 
 export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }: ScoreStepProps) {
   return (
-    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '30px', boxSizing: 'border-box', padding: '20px'}}>
+    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '40px', padding: '20px', boxSizing: 'border-box'}}>
       <Logo />
       
       {phaseEnded && (
@@ -55,7 +55,7 @@ export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }:
 
       <button 
         onClick={onNextRound} 
-        style={{ ...styles.goldButton, marginTop: '30px', width: '90%', maxWidth: '350px' }}
+        style={{ ...styles.lobbyButton, marginTop: '30px', width: '90%', maxWidth: '350px' }}
       >
         המשך לסבב הבא ➔
       </button>
