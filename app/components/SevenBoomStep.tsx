@@ -13,7 +13,7 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
     if (roomData.gameMode === 'individual') return roomData.totalScores[me?.name] || 0;
     const myTeamName = roomData.teamNames[me?.teamIdx];
     return roomData.totalScores[myTeamName] || 0;
-  }, [roomData.totalScores, roomData.gameMode, me]);
+  }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
     const age = parseInt(currentP.age) || 21;
@@ -21,7 +21,7 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
     const idxs = roomData.poolIndices || { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 };
     const totalIdx = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT);
     
-    let key: "KIDS" | "JUNIOR" | "TEEN" | "ADULT";
+    let key: "KIDS" | "JUNIOR" | "TEEN" | "ADULT" = "JUNIOR";
     if (difficulty === "easy") key = (totalIdx % 2 === 0) ? "KIDS" : "JUNIOR";
     else if (age <= 6) key = (totalIdx % 5 < 4) ? "KIDS" : "JUNIOR";
     else if (age <= 12) key = (totalIdx % 10 < 2) ? "KIDS" : "JUNIOR";
@@ -34,19 +34,11 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
     }
 
     const pool = roomData.shuffledPools?.[key] || [];
-    const index = idxs[key] || 0;
-    
-    // תיקון לוגיקה: כולם רואים תמונה ברמה קלה, אחרת רק עד גיל 12
-    const showImage = age <= 12 || difficulty === "easy";
-
-    return { 
-      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "" }), 
-      showImage
-    };
+    return pool[idxs[key] % (pool.length || 1)] || { word: "טוען...", en: "" };
   }, [roomData.currentTurnIdx, roomData.poolIndices, roomData.shuffledPools, roomData.difficulty, currentP.age]);
 
   const handleCorrect = (teamName: string) => {
-    handleAction(teamName, 2);
+    handleAction(teamName, 2); // ניקוד כפול ב-7 בום
     if (wordsCount + 1 >= 7) updateRoom({ step: 6 });
     else setWordsCount(prev => prev + 1);
   };
@@ -64,8 +56,8 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
           <h1 style={{ color: '#ffd700', fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>7 בום! 💣</h1>
           <div style={{ color: 'white', fontSize: '1.2rem', lineHeight: '1.6', marginBottom: '30px' }}>
             <p><strong>בשלב זה אין טיימר!</strong></p>
-            <p>עליכם לתאר 7 מילים.</p>
-            <p>כל הקבוצות יכולות לנחש. **כל ניחוש נכון שווה 2 נקודות!**</p>
+            <p>עליכם לתאר 7 סלבריטאים ברצף.</p>
+            <p>כל הקבוצות יכולות לנחש. <b>כל ניחוש נכון שווה 2 נקודות!</b></p>
           </div>
           <button onClick={() => setShowExplanation(false)} style={s.resume}>הבנתי, בואו נתחיל!</button>
         </div>
@@ -85,9 +77,8 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
           <div style={s.card}>
             {isIDescriber ? (
               <>
-                {wordData.showImage && wordData.img && <div style={s.imgBox}><img src={wordData.img} alt="" style={s.img} /></div>}
-                <div style={wordData.showImage ? s.heb : s.hebL}>{wordData.word}</div>
-                <div style={wordData.showImage ? s.en : s.enL}>{wordData.en}</div>
+                <div style={s.hebL}>{wordData.word}</div>
+                <div style={s.enL}>{wordData.en}</div>
               </>
             ) : (
               <div style={{ textAlign: 'center' }}>
@@ -118,11 +109,7 @@ const s: any = {
   skip: { width: '100%', minHeight: '55px', border: '2px dashed #ef4444', borderRadius: '15px', color: '#ef4444', fontWeight: 'bold', background: 'none' },
   center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   card: { width: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  imgBox: { height: '150px', marginBottom: '10px' },
-  img: { height: '100%', objectFit: 'contain' },
-  heb: { fontSize: '1.8rem', fontWeight: '900', wordBreak: 'break-word', textAlign: 'center' }, 
   hebL: { fontSize: '2.5rem', fontWeight: '900', wordBreak: 'break-word', textAlign: 'center' },
-  en: { fontSize: '1.2rem', opacity: 0.6, wordBreak: 'break-word', textAlign: 'center' }, 
   enL: { fontSize: '1.5rem', opacity: 0.6, wordBreak: 'break-word', textAlign: 'center' },
   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
   target: { height: '60px', border: '2px solid #ffd700', borderRadius: '15px', color: '#ffd700', fontWeight: '900', background: 'none' },

@@ -7,13 +7,8 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
   const me = roomData.players.find((p: any) => p.id === userId);
 
   const myDisplayScore = useMemo(() => {
-    if (roomData.gameMode === 'individual') {
-      return roomData.totalScores[me?.name] || 0;
-    } else {
-      const myTeamName = roomData.teamNames[me?.teamIdx];
-      return roomData.totalScores[myTeamName] || 0;
-    }
-  }, [roomData.totalScores, roomData.gameMode, me]);
+    return roomData.gameMode === 'individual' ? (roomData.totalScores[me?.name] || 0) : (roomData.totalScores[roomData.teamNames[me?.teamIdx]] || 0);
+  }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
     const age = parseInt(currentP.age) || 21;
@@ -35,6 +30,9 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
     return pool[idxs[key] % (pool.length || 1)] || { word: "טוען...", en: "" };
   }, [roomData.currentTurnIdx, roomData.poolIndices, roomData.shuffledPools, roomData.difficulty, currentP.age]);
 
+  const isPhaseA = roomData.currentPhase === 'A';
+  const isPhaseC = roomData.currentPhase === 'C';
+
   if (!isIDescriber) {
     return (
       <div style={s.layout}>
@@ -45,7 +43,9 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
         </div>
         <div style={{ textAlign: 'center', marginTop: '80px' }}>
           <h2 style={{ color: '#ffd700', fontSize: '2rem' }}>{currentP.name} מתאר/ת...</h2>
-          <p style={{ opacity: 0.7 }}>היו מוכנים לנחש!</p>
+          <p style={{ opacity: 0.7 }}>
+            {isPhaseA ? "שלב א': כולם מנחשים!" : isPhaseC ? "סבב ג': פנטומימה בלבד! 🎭" : "היו מוכנים לנחש!"}
+          </p>
         </div>
       </div>
     );
@@ -61,7 +61,9 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
           <button onClick={onExit} style={s.icon}>✕</button>
         </div>
       </div>
-      <button onClick={() => handleAction("SKIP")} style={s.skip}>דלג (1-)</button>
+      <button onClick={() => handleAction("SKIP")} style={s.skip}>
+        דילוג {isPhaseA ? "" : "(2-)"}
+      </button>
       <div style={s.center}>
         {roomData.isPaused ? (
           <div style={s.pauseBox}><h3 style={{ color: '#ffd700', textAlign: 'center' }}>ניהול ניקוד</h3><div style={s.scroll}>
@@ -74,10 +76,19 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
             ))}
           </div><button onClick={() => updateRoom({ isPaused: false })} style={s.resume}>המשך</button></div>
         ) : (
-          <div style={s.card}><div style={s.hebL}>{wordData.word}</div><div style={s.enL}>{wordData.en}</div></div>
+          <div style={s.card}>
+            {isPhaseC ? (
+              <div style={{ color: '#ef4444', fontWeight: 'bold', marginBottom: '10px' }}>🎭 פנטומימה בלבד! (ומילה אחת)</div>
+            ) : !isPhaseA ? (
+              <div style={{ color: '#ffd700', fontWeight: 'bold', marginBottom: '10px' }}>🗣️ מילה אחת בלבד!</div>
+            ) : null}
+            <div style={s.hebL}>{wordData.word}</div>
+            <div style={s.enL}>{wordData.en}</div>
+            {isPhaseA && <div style={{marginTop: '15px', color: '#ffd700', fontSize: '0.9rem'}}>חפיסה: {roomData.gameDeck?.length || 0} / {roomData.players.length * 5}</div>}
+          </div>
         )}
       </div>
-      {!roomData.isPaused && <div style={s.grid}>{targets.map((n: string) => <button key={n} onClick={() => handleAction(n)} style={s.target}>{n} (1+)</button>)}</div>}
+      {!roomData.isPaused && <div style={s.grid}>{targets.map((n: string) => <button key={n} onClick={() => handleAction(n)} style={s.target}>{n} (+1)</button>)}</div>}
     </div>
   );
 }
@@ -90,10 +101,10 @@ const s: any = {
   icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer', padding: '5px' },
   skip: { width: '100%', height: '55px', border: '2px dashed #ef4444', borderRadius: '15px', color: '#ef4444', fontWeight: 'bold', background: 'none', cursor: 'pointer', fontSize: '1.1rem' },
   center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '10px 0' },
-  card: { width: '100%', maxWidth: '320px', height: '100%', maxHeight: '280px', backgroundColor: '#1a1d2e', borderRadius: '35px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' },
+  card: { width: '100%', maxWidth: '320px', height: '100%', maxHeight: '300px', backgroundColor: '#1a1d2e', borderRadius: '35px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px' },
   hebL: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word' }, enL: { fontSize: '1.6rem', opacity: 0.6, textAlign: 'center' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '10px' },
-  target: { height: '75px', border: '2px solid #ffd700', borderRadius: '20px', fontSize: '1.2rem', fontWeight: '900', backgroundColor: 'rgba(255,215,0,0.05)', color: '#ffd700', cursor: 'pointer' },
+  target: { height: '70px', border: '2px solid #ffd700', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', backgroundColor: 'rgba(255,215,0,0.05)', color: '#ffd700', cursor: 'pointer' },
   pauseBox: { width: '100%', height: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column' },
   scroll: { flex: 1, overflowY: 'auto', margin: '10px 0' }, row: { display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #333', alignItems: 'center' },
   rowBtn: { display: 'flex', gap: '15px', alignItems: 'center' }, miniBtn: { width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ffd700', background: 'none', color: '#ffd700' },
