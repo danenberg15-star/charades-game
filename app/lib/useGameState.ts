@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc } from "firebase/firestore";
-import { generateRoomCode } from "./game-utils";
+import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
 
 export function useGameState() {
   const [mounted, setMounted] = useState(false);
@@ -51,11 +51,10 @@ export function useGameState() {
       gameMode: "team", difficulty: "easy", numTeams: 2,
       players: [{ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, timeLeft: 5, // QA Timer
+      totalScores: {}, roundScore: 0, timeLeft: 5, 
       isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
       teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
-      currentPhase: 'A', // מתחילים בשלב א'
-      poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
+      currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
     });
   };
 
@@ -64,7 +63,16 @@ export function useGameState() {
     if (id === "עומר") {
       const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
       localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
-      await setDoc(doc(db, "rooms", "עומר"), { id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), gameMode: "team", numTeams: 2, difficulty: "easy", players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: [] });
+      
+      // אתחול מלא לחדר עומר כולל מאגר מילים
+      await setDoc(doc(db, "rooms", "עומר"), { 
+        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+        gameMode: "team", numTeams: 2, difficulty: "easy", 
+        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+        timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+        teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
+        preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+      });
       setRoomId("עומר"); setStep(3); return;
     }
     const snap = await getDoc(doc(db, "rooms", id));

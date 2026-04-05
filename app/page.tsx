@@ -14,15 +14,11 @@ import SevenBoomStep from "./components/SevenBoomStep";
 export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName } = useGameState();
 
-  const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined 
-    ? roomData.players[roomData.currentTurnIdx] 
-    : null;
-    
+  const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
 
   useEffect(() => {
     if (!roomId || !roomData || !currentP || roomData.isPaused || step < 4 || step === 8) return;
-    
     const isBot = currentP?.id?.startsWith('d_');
     const isHost = roomData.players?.[0]?.id === userId;
     if (!isIDescriber && !(isBot && isHost)) return;
@@ -30,12 +26,10 @@ export default function FamilyAliasApp() {
     const interval = setInterval(() => {
       if (step === 4) {
         if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); // QA: 5 שניות
+        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); // QA: 5s
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
-        else {
-          updateRoom({ step: 6, poolIndex: (roomData.poolIndex || 0) + 1, phaseEnded: null });
-        }
+        else updateRoom({ step: 6, poolIndex: (roomData.poolIndex || 0) + 1, phaseEnded: null });
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -47,33 +41,28 @@ export default function FamilyAliasApp() {
     if (!roomData || !currentP || roomData.isPaused) return;
     const newIndex = (roomData.poolIndex || 0) + 1;
     const newScores = { ...roomData.totalScores };
-    const describerEntity = roomData.teamNames[currentP.teamIdx];
+    const describerTeam = roomData.teamNames[currentP.teamIdx];
 
-    // טיפול בדילוג (SKIP)
     if (targetName === "SKIP") {
-      if (roomData.currentPhase === 'A') {
-        // שלב א': סלבריטאי נמחק, אין קנס
-        updateRoom({ poolIndex: newIndex });
-      } else {
-        // שלב ב/ג: קנס של 2- נקודות
-        newScores[describerEntity] = (newScores[describerEntity] || 0) - 2;
+      if (roomData.currentPhase === 'A') updateRoom({ poolIndex: newIndex });
+      else {
+        newScores[describerTeam] = (newScores[describerTeam] || 0) - 2; // קנס 2- בסבב ב/ג
         updateRoom({ roundScore: (roomData.roundScore || 0) - 2, poolIndex: newIndex, totalScores: newScores });
       }
       return;
     }
 
-    // ניקוד לפי שלב
     if (roomData.currentPhase === 'A') {
-      // שלב א': +1 למנחש, +1 למתאר
-      newScores[describerEntity] = (newScores[describerEntity] || 0) + 1;
+      newScores[describerTeam] = (newScores[describerTeam] || 0) + 1;
       newScores[targetName] = (newScores[targetName] || 0) + 1;
       
       const pool = roomData.shuffledPools || [];
       const currentWord = pool[roomData.poolIndex % (pool.length || 1)];
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
-      const uniquePlayersCount = new Set(roomData.players.map((p: any) => p.id)).size;
+      const nPlayers = roomData.players.length;
       
-      if (updatedDeck.length >= uniquePlayersCount * 5) {
+      // בדיקה אם הגענו ל-N*5 (בחדר עומר: 30 מילים)
+      if (updatedDeck.length >= nPlayers * 5) {
         updateRoom({ 
           totalScores: newScores, 
           poolIndex: 0, 
@@ -87,16 +76,11 @@ export default function FamilyAliasApp() {
         updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndex: newIndex, gameDeck: updatedDeck });
       }
     } else {
-      // שלב ב/ג או 7 בום: +1 או +2 נקודות
       newScores[targetName] = (newScores[targetName] || 0) + points;
-      
       const pool = roomData.shuffledPools || [];
       if (newIndex >= pool.length) {
-        if (roomData.currentPhase === 'B') {
-          updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndex: 0, step: 6, phaseEnded: 'ב' });
-        } else {
-          updateRoom({ totalScores: newScores, step: 7, winner: Object.keys(newScores).reduce((a, b) => newScores[a] > newScores[b] ? a : b) });
-        }
+        if (roomData.currentPhase === 'B') updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndex: 0, step: 6, phaseEnded: 'ב' });
+        else updateRoom({ totalScores: newScores, step: 7, winner: Object.keys(newScores).reduce((a, b) => newScores[a] > newScores[b] ? a : b) });
       } else {
         updateRoom({ roundScore: (roomData.roundScore || 0) + points, poolIndex: newIndex, totalScores: newScores });
       }
@@ -111,7 +95,6 @@ export default function FamilyAliasApp() {
     <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
       {step === 1 && <EntryStep onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
-      
       {roomData && (
         <>
           {step === 3 && (
@@ -133,21 +116,16 @@ export default function FamilyAliasApp() {
           {step === 5 && <GameStep roomData={roomData} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
           {step === 6 && (
             <ScoreStep 
-              scores={roomData.totalScores} 
-              entities={roomData.teamNames.slice(0, roomData.numTeams)} 
-              phaseEnded={roomData.phaseEnded} 
+              scores={roomData.totalScores} entities={roomData.teamNames.slice(0, roomData.numTeams)} phaseEnded={roomData.phaseEnded} 
               onNextRound={() => {
                 const nextTeamIdx = (roomData.currentTeamIdx + 1) % roomData.numTeams;
                 const teamPlayerIndices = { ...roomData.teamPlayerIndices };
                 teamPlayerIndices[roomData.currentTeamIdx] = (teamPlayerIndices[roomData.currentTeamIdx] + 1);
-
                 const playersInNextTeam = roomData.players.filter((p: any) => p.teamIdx === nextTeamIdx);
                 const nextPlayer = playersInNextTeam[teamPlayerIndices[nextTeamIdx] % playersInNextTeam.length];
                 const globalIdx = roomData.players.findIndex((p: any) => p.id === nextPlayer.id);
-
                 const nextScore = Number(roomData.totalScores[roomData.teamNames[nextTeamIdx]] || 0);
 
-                // בדיקת 7 בום: רק בשלב ב' ו-ג' אם הניקוד הוא כפולה של 7
                 if (roomData.currentPhase !== 'A' && nextScore > 0 && nextScore % 7 === 0) {
                   updateRoom({ step: 8, currentTurnIdx: globalIdx, currentTeamIdx: nextTeamIdx, teamPlayerIndices, roundScore: 0, phaseEnded: null });
                 } else {
