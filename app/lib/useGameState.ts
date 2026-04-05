@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore"; // נוסף increment
+import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore";
 import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
 
 export function useGameState() {
@@ -82,6 +82,5 @@ export function useGameState() {
     } else alert("חדר לא נמצא");
   };
 
-  // ייצוא increment לשימוש ב-page.tsx
   return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };
 }
