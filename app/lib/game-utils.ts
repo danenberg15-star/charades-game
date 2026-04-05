@@ -1,6 +1,5 @@
 import { CELEBS_WORDS } from "./words/celebs";
 
-// יצירת קוד חדר המורכב מ-4 ספרות בדיוק (1000-9999)
 export const generateRoomCode = () => Math.floor(1000 + Math.random() * 9000).toString();
 
 export const shuffleArray = (array: any[]) => {
@@ -12,13 +11,16 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// מחזיר מאגרים שכולם מבוססים על קובץ ה-CELEBS כדי למנוע שגיאות ייבוא
-export const getInitialShuffledPools = () => {
-  const allCelebs = shuffleArray(CELEBS_WORDS);
+// מקבל שמות מותאמים אישית ומציב אותם בראש הרשימה
+export const getInitialShuffledPools = (customWords: any[] = []) => {
+  const shuffledCelebs = shuffleArray(CELEBS_WORDS);
+  // הוספת המילים המותאמות אישית לפני המאגר המשורבל
+  const combinedPool = [...customWords, ...shuffledCelebs];
+  
   return {
-    KIDS: allCelebs,
-    JUNIOR: allCelebs,
-    TEEN: allCelebs,
-    ADULT: allCelebs
+    KIDS: combinedPool,
+    JUNIOR: combinedPool,
+    TEEN: combinedPool,
+    ADULT: combinedPool
   };
 };
