@@ -78,6 +78,7 @@ export default function FamilyAliasApp() {
       } else {
         newScores[entity] = (newScores[entity] || 0) - 2;
         const pool = roomData.shuffledPools?.[poolKey] || [];
+        const skippedWord = pool[roomData.poolIndices[poolKey] % pool.length];
         const newPool = [...pool];
         newPool.push(newPool.splice(roomData.poolIndices[poolKey] % pool.length, 1)[0]);
         updateRoom({ 
@@ -104,7 +105,7 @@ export default function FamilyAliasApp() {
         updateRoom({
           totalScores: newScores, poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 },
           shuffledPools: { KIDS: finalPool, JUNIOR: finalPool, TEEN: finalPool, ADULT: finalPool },
-          currentPhase: 'B', gameDeck: updatedDeck, step: 6 // מעבר לטבלה בסיום שלב א'
+          currentPhase: 'B', gameDeck: updatedDeck, step: 6 
         });
       } else {
         updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndices: newIndices, gameDeck: updatedDeck });
@@ -143,7 +144,33 @@ export default function FamilyAliasApp() {
           teamNames={roomData.teamNames} updateTeamNames={(names) => updateRoom({ teamNames: names })} 
           onPlayerMove={(pId, tIdx) => { const p = roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl); updateRoom({ players: p }); }} 
           editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
-          onStart={() => updateRoom({ step: 4, preGameTimer: 3, shuffledPools: getInitialShuffledPools(), poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, roundScore: 0, currentPhase: 'A', gameDeck: [] })} 
+          onStart={() => {
+            // לוגיקת Master Rotation - הבטחת החלפת קבוצות ושחקנים
+            let masterRotation = [];
+            if (roomData.gameMode === "team") {
+              const playersByTeam = Array.from({ length: roomData.numTeams }, (_, i) => 
+                roomData.players.filter((p: any) => p.teamIdx === i)
+              );
+              const maxPlayers = Math.max(...playersByTeam.map(t => t.length));
+              for (let i = 0; i < maxPlayers; i++) {
+                for (let j = 0; j < roomData.numTeams; j++) {
+                  if (playersByTeam[j].length > 0) {
+                    masterRotation.push(playersByTeam[j][i % playersByTeam[j].length]);
+                  }
+                }
+              }
+            } else {
+              masterRotation = shuffleArray(roomData.players);
+            }
+
+            updateRoom({ 
+              step: 4, preGameTimer: 3, 
+              players: masterRotation, // עדכון המערך לסדר התורות הקבוע
+              shuffledPools: getInitialShuffledPools(), 
+              poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, 
+              roundScore: 0, currentPhase: 'A', gameDeck: [] 
+            });
+          }} 
           onExit={handleFullReset} 
         />
       )}
