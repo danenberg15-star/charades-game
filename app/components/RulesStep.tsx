@@ -5,44 +5,48 @@ export default function RulesStep({ onStart }: { onStart: () => void }) {
   return (
     <div style={s.layout}>
       <div style={s.container}>
-        <h1 style={{ ...s.title, fontSize: '1.8rem', marginBottom: '20px' }}>איך משחקים? 🏆</h1>
+        <h1 style={{ ...s.title, fontSize: '1.8rem', marginBottom: '15px' }}>איך משחקים? 🏆</h1>
         
-        <div style={{ ...s.scrollArea, overflowY: 'hidden' }}>
-          <section style={{ ...s.section, marginBottom: '18px', paddingBottom: '10px' }}>
-            <h2 style={{ ...s.subTitle, fontSize: '1.1rem' }}>1. התחברות</h2>
-            <p style={s.text}>פותחים חדר חדש ושולחים את הקוד לחברים, או מצטרפים לחדר קיים בעזרת קוד או קישור.</p>
-          </section>
-
-          <section style={{ ...s.section, marginBottom: '18px', paddingBottom: '10px' }}>
-            <h2 style={{ ...s.subTitle, fontSize: '1.1rem' }}>2. הגדרות החדר</h2>
-            <p style={s.text}>בדף החדר תגדירו את סוג המשחק: <b>יחידים</b> או <b>קבוצות</b>. ברמה הקלה תקבלו מילים עם תמונות שכל ילד בן 5 מכיר.</p>
-          </section>
-
-          <section style={{ ...s.section, borderBottom: 'none', marginBottom: '15px' }}>
-            <h2 style={{ ...s.subTitle, fontSize: '1.1rem' }}>3. מהלך המשחק והניקוד</h2>
+        <div style={s.scrollArea}>
+          <section style={s.section}>
+            <h2 style={s.subTitle}>1. שלב א': בניית החפיסה 🎴</h2>
             <p style={s.text}>
-              בכל תור (דקה) תתאר מילה <b>בלי להשתמש בשורש המילה או בשפה אחרת.</b>
-            </p>
-            <p style={{ ...s.text, marginTop: '8px' }}>
-              • <b>ניחשו?</b> לחץ על שם השחקן לניקוד (+1).<br/>
-              • <b>קשה?</b> "דלג" יחליף מילה ויוריד נקודה (-1).
+              זהו שלב מקדים שבו מייצרים את מאגר השמות למשחק:<br/>
+              • לכל שחקן יש <b>דקה אחת</b> לתאר כמה שיותר סלבריטאים.<br/>
+              • <b>הניחוש פתוח לכולם!</b> כל ניחוש מוצלח מעניק נקודה אחת לקבוצת המנחש ונקודה אחת לקבוצת המתאר.<br/>
+              • סלבריטאי שדלגו עליו – נמחק מהמשחק.<br/>
+              • השלב מסתיים כשנאספו 5 סלבריטאים לכל משתתף.
             </p>
           </section>
 
-          <div style={{ textAlign: 'center', color: '#ffd700', fontWeight: '900', fontSize: '1.15rem', marginTop: '10px' }}>
-            הראשון ל-50 נקודות מנצח!
+          <section style={s.section}>
+            <h2 style={s.subTitle}>2. שלב ב' 🗣️</h2>
+            <p style={s.text}>
+              משחקים רק עם הסלבריטאים ש"ננעלו" בחפיסה.<br/>
+              • בכל תור יש דקה אחת ורק חברי הקבוצה של המתאר יכולים לנחש.<br/>
+              • המתאר יכול להגיד <b>מילה אחת בלבד</b> לקבוצה שלו.<br/>
+              • ניחשתם? לוחצים על שם הקבוצה (+1).<br/>
+              • דילגתם? יורדות לקבוצה <b>2 נקודות</b>.
+            </p>
+          </section>
+
+          <section style={{ ...s.section, borderBottom: 'none' }}>
+            <h2 style={s.subTitle}>3. סבב ג' ואחרון 🎭</h2>
+            <p style={s.text}>
+              זהה לגמרי לסבב ב', אלא שאסור למתאר לדבר בכלל!<br/>
+              • המתאר מסביר ב<b>פנטומימה בלבד</b> (ומילה אחת מייצגת).<br/>
+              • דילגתם? <b>2- נקודות</b> והסלבריטאי חוזר לסוף החפיסה.
+            </p>
+          </section>
+
+          <div style={{ textAlign: 'center', color: '#ffd700', fontWeight: '900', fontSize: '1.1rem', marginTop: '10px' }}>
+            הקבוצה שצברה הכי הרבה נקודות בסוף סבב ג' מנצחת! 👑
           </div>
         </div>
 
-        {/* כפתור ההתחלה */}
-        <button onClick={onStart} style={{ ...s.button, height: '52px', marginTop: '10px' }}>
+        <button onClick={onStart} style={s.button}>
           הבנתי, בואו נתחיל!
         </button>
-
-        {/* שורת הקרדיט ל-Pixabay - הועברה אל מתחת לכפתור */}
-        <div style={{ textAlign: 'center', fontSize: '0.65rem', opacity: 0.4, marginTop: '10px', color: 'white' }}>
-          Images courtesy of Pixabay
-        </div>
       </div>
     </div>
   );
@@ -50,11 +54,11 @@ export default function RulesStep({ onStart }: { onStart: () => void }) {
 
 const s: any = {
   layout: { display: 'flex', flexDirection: 'column', height: '100dvh', backgroundColor: '#05081c', color: 'white', padding: '15px', direction: 'rtl', alignItems: 'center', justifyContent: 'center' },
-  container: { width: '100%', maxWidth: '450px', height: 'auto', maxHeight: '98%', backgroundColor: '#1a1d2e', borderRadius: '30px', padding: '25px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', border: '1px solid rgba(255, 215, 0, 0.2)' },
+  container: { width: '100%', maxWidth: '450px', backgroundColor: '#1a1d2e', borderRadius: '30px', padding: '20px', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', border: '1px solid rgba(255, 215, 0, 0.2)', maxHeight: '95vh' },
   title: { color: '#ffd700', textAlign: 'center', fontWeight: '900' },
-  scrollArea: { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' },
-  section: { borderBottom: '1px solid rgba(255,255,255,0.1)' },
-  subTitle: { color: '#ffd700', marginBottom: '6px', fontWeight: '700' },
-  text: { fontSize: '0.95rem', lineHeight: '1.4', opacity: 0.9 },
-  button: { width: '100%', backgroundColor: '#ffd700', color: '#05081c', border: 'none', borderRadius: '15px', fontSize: '1.3rem', fontWeight: '900', cursor: 'pointer', transition: 'transform 0.1s active' }
+  scrollArea: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '15px', paddingRight: '5px' },
+  section: { borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' },
+  subTitle: { color: '#ffd700', marginBottom: '4px', fontWeight: '700', fontSize: '1.1rem' },
+  text: { fontSize: '0.9rem', lineHeight: '1.4', opacity: 0.9 },
+  button: { width: '100%', height: '52px', backgroundColor: '#ffd700', color: '#05081c', border: 'none', borderRadius: '15px', fontSize: '1.2rem', fontWeight: '900', cursor: 'pointer', marginTop: '15px', flexShrink: 0 }
 };
