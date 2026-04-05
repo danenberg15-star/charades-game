@@ -12,6 +12,7 @@ import VictoryStep from "./components/VictoryStep";
 import SevenBoomStep from "./components/SevenBoomStep";
 
 export default function FamilyAliasApp() {
+  // הסרתי את setUserAge כי כבר לא שואלים על גיל
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName } = useGameState();
 
   const currentP = roomData?.players?.[roomData?.currentTurnIdx];
@@ -26,7 +27,7 @@ export default function FamilyAliasApp() {
     const interval = setInterval(() => {
       if (step === 4) {
         if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 });
+        else updateRoom({ step: 5, timeLeft: 45, roundScore: 0 }); // החזרתי את זמן הסיבוב ל-45
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
         else {
@@ -95,7 +96,7 @@ export default function FamilyAliasApp() {
           onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
           editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
           onStart={() => {
-            // איסוף כל המילים המותאמות אישית מכל השחקנים
+            // איסוף מילים מותאמות אישית
             const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
             updateRoom({ step: 4, preGameTimer: 3, shuffledPools: getInitialShuffledPools(allCustom), poolIndices: { JUNIOR: 0 }, roundScore: 0, currentPhase: 'A', gameDeck: [] });
           }} 
@@ -104,7 +105,28 @@ export default function FamilyAliasApp() {
       )}
       {step === 4 && roomData && <CountdownStep timer={roomData.preGameTimer} turnInfo={{name: currentP?.name, team: roomData.teamNames[currentP?.teamIdx]}} isTeamMode={roomData.gameMode === "team"} currentPhase={roomData.currentPhase} />}
       {step === 5 && roomData && <GameStep roomData={roomData} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
-      {step === 6 && roomData && <ScoreStep scores={roomData.totalScores} entities={roomData.gameMode === 'individual' ? roomData.players.map((p: any) => p.name) : roomData.teamNames.slice(0, roomData.numTeams)} phaseEnded={roomData.phaseEnded} onNextRound={() => updateRoom({ step: 4, preGameTimer: 3, roundScore: 0, phaseEnded: null })} />}
+      
+      {step === 6 && roomData && (
+        <ScoreStep 
+          scores={roomData.totalScores} 
+          entities={roomData.gameMode === 'individual' ? roomData.players.map((p: any) => p.name) : roomData.teamNames.slice(0, roomData.numTeams)} 
+          phaseEnded={roomData.phaseEnded} 
+          onNextRound={() => {
+            // החזרת לוגיקת סבב התורות ו-7 בום
+            const nextIdx = (roomData.currentTurnIdx + 1) % roomData.players.length;
+            const nextP = roomData.players[nextIdx];
+            const targetScoreEntity = roomData.gameMode === 'team' ? roomData.teamNames[nextP.teamIdx] : nextP.name;
+            const nextScore = Number(roomData.totalScores[targetScoreEntity] || 0);
+
+            if (roomData.gameMode === 'team' && roomData.currentPhase !== 'A' && nextScore > 0 && nextScore % 7 === 0) {
+              updateRoom({ step: 8, currentTurnIdx: nextIdx, roundScore: 0, phaseEnded: null });
+            } else {
+              updateRoom({ step: 4, currentTurnIdx: nextIdx, preGameTimer: 3, roundScore: 0, phaseEnded: null });
+            }
+          }} 
+        />
+      )}
+      
       {step === 7 && roomData && <VictoryStep winnerName={roomData.winner} onRestart={handleFullReset} />}
       {step === 8 && roomData && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
     </div>
