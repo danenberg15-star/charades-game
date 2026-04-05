@@ -65,12 +65,17 @@ export function useGameState() {
     await setDoc(doc(db, "rooms", id), {
       id, step: 3, createdAt: Date.now(), 
       lastActivity: Date.now(), 
-      gameMode: "team", // מקובע לקבוצות
-      difficulty: "easy", // מקובע לרמה קלה
+      gameMode: "team",
+      difficulty: "easy",
       numTeams: 2,
       players: [{ id: userId, name: finalName, teamIdx: 0, customWords: payload.customWords }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, timeLeft: 45, isPaused: false, currentTurnIdx: 0, 
+      totalScores: {}, roundScore: 0, 
+      timeLeft: 5, // QA Timer
+      isPaused: false, 
+      currentTurnIdx: 0,
+      currentTeamIdx: 0, // מעקב אחרי הקבוצה הנוכחית
+      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, // מעקב אחרי השחקן הבא בכל קבוצה
       poolIndex: 0, preGameTimer: 3, shuffledPools: []
     });
   };
@@ -78,24 +83,6 @@ export function useGameState() {
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const finalName = payload.name;
     const id = idInput.toUpperCase();
-
-    if (id === "עומר") {
-      const qp = [
-        { id: userId, name: finalName || "עומר", teamIdx: 0, customWords: payload.customWords }, 
-        ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))
-      ];
-      await setDoc(doc(db, "rooms", "עומר"), { 
-        id: "עומר", step: 3, createdAt: Date.now(), 
-        lastActivity: Date.now(), 
-        gameMode: "team", numTeams: 2, difficulty: "easy",
-        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-        timeLeft: 45, isPaused: false, currentTurnIdx: 0, 
-        poolIndex: 0, preGameTimer: 3, shuffledPools: [] 
-      });
-      setRoomId("עומר"); setStep(3); localStorage.setItem("alias_roomId", "עומר");
-      return;
-    }
-
     const snap = await getDoc(doc(db, "rooms", id));
     if (snap.exists()) { 
       const data = snap.data();
