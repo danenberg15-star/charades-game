@@ -39,11 +39,15 @@ export default function FamilyAliasApp() {
 
     const interval = setInterval(() => {
       if (step === 4) {
-        if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 60, roundScore: 0 });
+        if (roomData.preGameTimer > 0) {
+          updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
+        } else {
+          updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); // טיימר QA: 5 שניות
+        }
       } else if (step === 5) {
-        if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
-        else {
+        if (roomData.timeLeft > 0) {
+          updateRoom({ timeLeft: roomData.timeLeft - 1 });
+        } else {
           const age = parseInt(currentP.age) || 21;
           const idxs = roomData.poolIndices || { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 };
           const poolKey = calculatePoolKey(age, idxs, roomData.difficulty || "age-appropriate");
@@ -70,13 +74,12 @@ export default function FamilyAliasApp() {
     if (targetName === "SKIP") {
       const entity = roomData.gameMode === "individual" ? currentP.name : roomData.teamNames[currentP.teamIdx];
       if (roomData.currentPhase === 'A') {
-        updateRoom({ poolIndices: newIndices }); // בשלב א' מילה נמחקת ללא קנס
+        updateRoom({ poolIndices: newIndices });
       } else {
-        newScores[entity] = (newScores[entity] || 0) - 2; // קנס דילוג 2- נקודות
+        newScores[entity] = (newScores[entity] || 0) - 2;
         const pool = roomData.shuffledPools?.[poolKey] || [];
-        const skippedWord = pool[roomData.poolIndices[poolKey] % pool.length];
         const newPool = [...pool];
-        newPool.push(newPool.splice(roomData.poolIndices[poolKey] % pool.length, 1)[0]); // העברה לסוף החפיסה
+        newPool.push(newPool.splice(roomData.poolIndices[poolKey] % pool.length, 1)[0]);
         updateRoom({ 
           roundScore: (roomData.roundScore || 0) - 2, 
           poolIndices: newIndices, 
@@ -101,22 +104,19 @@ export default function FamilyAliasApp() {
         updateRoom({
           totalScores: newScores, poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 },
           shuffledPools: { KIDS: finalPool, JUNIOR: finalPool, TEEN: finalPool, ADULT: finalPool },
-          currentPhase: 'B', gameDeck: updatedDeck, step: 6
+          currentPhase: 'B', gameDeck: updatedDeck, step: 6 // מעבר לטבלה בסיום שלב א'
         });
       } else {
         updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndices: newIndices, gameDeck: updatedDeck });
       }
     } else {
       newScores[targetName] = (newScores[targetName] || 0) + points;
-      if (roomData.gameMode === "individual") {
-        newScores[currentP.name] = (newScores[currentP.name] || 0) + points;
-      }
+      if (roomData.gameMode === "individual") newScores[currentP.name] = (newScores[currentP.name] || 0) + points;
       
       const pool = roomData.shuffledPools?.[poolKey] || [];
       if (newIndices[poolKey] >= pool.length) {
-        if (roomData.currentPhase === 'B') {
-          updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, step: 6 });
-        } else {
+        if (roomData.currentPhase === 'B') updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndices: { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 }, step: 6 });
+        else {
           const entities = roomData.gameMode === 'individual' ? roomData.players.map((p: any) => p.name) : roomData.teamNames.slice(0, roomData.numTeams);
           const winner = entities.reduce((a: string, b: string) => (newScores[a] || 0) > (newScores[b] || 0) ? a : b);
           updateRoom({ totalScores: newScores, step: 7, winner: winner });
@@ -147,7 +147,7 @@ export default function FamilyAliasApp() {
           onExit={handleFullReset} 
         />
       )}
-      {step === 4 && roomData && <CountdownStep timer={roomData.preGameTimer} turnInfo={{name: currentP?.name, team: roomData.teamNames[currentP?.teamIdx]}} isTeamMode={roomData.gameMode === "team"} />}
+      {step === 4 && roomData && <CountdownStep timer={roomData.preGameTimer} turnInfo={{name: currentP?.name, team: roomData.teamNames[currentP?.teamIdx]}} isTeamMode={roomData.gameMode === "team"} currentPhase={roomData.currentPhase} />}
       {step === 5 && roomData && <GameStep roomData={roomData} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
       {step === 6 && roomData && (
         <ScoreStep 
