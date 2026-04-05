@@ -10,17 +10,14 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
   const me = roomData.players.find((p: any) => p.id === userId);
 
   const myDisplayScore = useMemo(() => {
-    if (roomData.gameMode === 'individual') return roomData.totalScores[me?.name] || 0;
     const myTeamName = roomData.teamNames[me?.teamIdx];
     return roomData.totalScores[myTeamName] || 0;
-  }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
+  }, [roomData.totalScores, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
     const difficulty = roomData.difficulty || "easy";
     const pool = roomData.shuffledPools || [];
     const index = roomData.poolIndex || 0;
-    
-    // הצגת תמונה נקבעת כעת רק לפי רמת הקושי
     const showImage = difficulty === "easy";
 
     return { 
@@ -30,26 +27,34 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
   }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty]);
 
   const handleCorrect = (teamName: string) => {
+    // שליחת 2 נקודות בונוס לפי האפיון
     handleAction(teamName, 2);
-    if (wordsCount + 1 >= 7) updateRoom({ step: 6 });
-    else setWordsCount(prev => prev + 1);
+    if (wordsCount + 1 >= 7) {
+      updateRoom({ step: 6 }); // חזרה למסך התוצאות בסיום 7 מילים
+    } else {
+      setWordsCount(prev => prev + 1);
+    }
   };
 
   const handleSkip = () => {
+    // דילוג גורר קנס של 2- נקודות לפי אפיון סבב ב/ג
     handleAction("SKIP");
-    if (wordsCount + 1 >= 7) updateRoom({ step: 6 });
-    else setWordsCount(prev => prev + 1);
+    if (wordsCount + 1 >= 7) {
+      updateRoom({ step: 6 });
+    } else {
+      setWordsCount(prev => prev + 1);
+    }
   };
 
   if (showExplanation) {
     return (
       <div style={{...s.layout, justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
         <div style={{...s.pauseBox, height: 'auto', padding: '40px 20px', maxWidth: '400px'}}>
-          <h1 style={{ color: '#00f2ff', fontSize: '3rem', fontWeight: '900', marginBottom: '20px' }}>7 בום! 💣</h1>
-          <div style={{ color: 'white', fontSize: '1.2rem', lineHeight: '1.6', marginBottom: '30px' }}>
-            <p><strong>בשלב זה אין טיימר!</strong></p>
-            <p>עליכם לתאר 7 מילים.</p>
-            <p>כל הקבוצות יכולות לנחש. <b>כל ניחוש נכון שווה 2 נקודות!</b></p>
+          <h1 style={{ color: '#00f2ff', fontSize: '3.5rem', fontWeight: '900', marginBottom: '20px' }}>7 בום! 💣</h1>
+          <div style={{ color: 'white', fontSize: '1.3rem', lineHeight: '1.6', marginBottom: '30px' }}>
+            <p><strong>שלב בונוס ללא טיימר!</strong></p>
+            <p>עליכם לתאר 7 מילים ברצף.</p>
+            <p>הניחוש פתוח לכולם - <b>כל הצלחה שווה 2 נקודות!</b></p>
           </div>
           <button onClick={() => setShowExplanation(false)} style={s.resume}>הבנתי, בואו נתחיל!</button>
         </div>
@@ -61,12 +66,12 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
     <div style={s.layout}>
       <div style={s.header}>
         <div style={s.scoreBox}>🏆 {myDisplayScore}</div>
-        <div style={{...s.timer, color: '#00f2ff', fontSize: '1.5rem', width: 'max-content'}}>מילה {wordsCount + 1} / 7</div>
+        <div style={{...s.timer, color: '#00f2ff', fontSize: '1.6rem', width: 'max-content'}}>מילה {wordsCount + 1} מתוך 7</div>
         <button onClick={onExit} style={s.icon}>✕</button>
       </div>
       
       {isIDescriber && (
-        <button onClick={handleSkip} style={s.skip}>דלג (1-)</button>
+        <button onClick={handleSkip} style={s.skip}>דלג (2- נקודות)</button>
       )}
 
       <div style={s.center}>
@@ -84,9 +89,9 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
               </>
             ) : (
               <div style={{ textAlign: 'center' }}>
-                <h2 style={{ color: '#00f2ff', fontSize: '2rem', marginBottom: '10px' }}>{currentP.name}</h2>
+                <h2 style={{ color: '#00f2ff', fontSize: '2.2rem', marginBottom: '10px' }}>{currentP.name}</h2>
                 <p style={{ opacity: 0.8, fontSize: '1.2rem' }}>מתאר/ת עכשיו (7 בום)...</p>
-                <p style={{ opacity: 0.6 }}>כל הקבוצות יכולות לנחש!</p>
+                <p style={{ color: '#00f2ff', fontWeight: 'bold', marginTop: '15px' }}>תחרות חופשית! כולם מנחשים!</p>
               </div>
             )}
           </div>
@@ -94,7 +99,7 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
 
       {isIDescriber && (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, color: '#00f2ff' }}>מי ניחש נכון? (2+)</p>
+          <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, color: '#00f2ff' }}>מי מהקבוצות ניחשה נכון? (2+)</p>
           <div style={s.grid}>
             {roomData.teamNames.slice(0, roomData.numTeams).map((n: string) => (
               <button key={n} onClick={() => handleCorrect(n)} style={s.target}>{n}</button>
