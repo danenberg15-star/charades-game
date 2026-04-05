@@ -25,7 +25,8 @@ export const styles: { [key: string]: CSSProperties } = {
   playerCard: { backgroundColor: 'rgba(255, 255, 255, 0.1)', color: 'white', padding: '8px', borderRadius: '12px', margin: '3px 0', fontSize: '0.9rem', textAlign: 'center', fontWeight: 'bold' },
 
   lobbyButton: { width: '100%', minHeight: '60px', borderRadius: '20px', backgroundColor: '#00f2ff', color: '#05081c', fontWeight: '900', border: 'none', fontSize: '1.4rem', cursor: 'pointer' },
+  goldButton: { width: '100%', minHeight: '60px', borderRadius: '20px', backgroundColor: '#00f2ff', color: '#05081c', fontWeight: '900', border: 'none', fontSize: '1.4rem', cursor: 'pointer' },
   disabledButton: { width: '100%', minHeight: '60px', borderRadius: '20px', backgroundColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.2)', fontWeight: '900', border: 'none', fontSize: '1.4rem' },
   
-  modernPauseBtn: { width: '50px', height: '50px', borderRadius: '50%', backgroundColor: 'rgba(0, 242, 255, 0.15)', border: '2px solid #00f2ff', color: '#00f2ff', fontSize: '20px', cursor: 'pointer' }
+  modernPauseBtn: { width: '50px', height: '50px', borderRadius: '50%', backgroundColor: 'rgba(0, 242, 255, 0.15)', border: '2px solid #00f2ff', color: '#00f2ff', fontSize: '20px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }
 };
