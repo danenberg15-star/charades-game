@@ -15,7 +15,7 @@ const localStyles: { [key: string]: CSSProperties } = {
     width: '85%', height: 'auto', maxHeight: '22vh', objectFit: 'contain'
   },
   entryTitle: { 
-    color: '#ffd700', 
+    color: '#00f2ff', 
     fontSize: 'clamp(1.1rem, 4.5vw, 1.6rem)', 
     fontWeight: '900', 
     textAlign: 'center', 
@@ -27,91 +27,78 @@ const localStyles: { [key: string]: CSSProperties } = {
     width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '15px', flex: 1, justifyContent: 'center'
   },
   inputGroup: {
-    display: 'flex', flexDirection: 'column', gap: '5px', width: '100%'
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '5px'
   },
   label: {
-    color: '#ffd700', fontSize: '0.85rem', fontWeight: 'bold', paddingRight: '5px'
+    color: '#00f2ff',
+    fontSize: '0.85rem',
+    fontWeight: 'bold',
+    paddingRight: '5px'
   },
   entryInput: { 
-    width: '100%', height: '3em', padding: '0 12px', borderRadius: '12px', 
+    width: '100%', height: '3.2em', padding: '0 12px', borderRadius: '12px', 
     backgroundColor: 'rgba(255,255,255,0.08)', color: 'white', 
     border: '1px solid rgba(255,255,255,0.15)', fontSize: '1.1rem', 
-    textAlign: 'center', boxSizing: 'border-box' 
+    textAlign: 'center', boxSizing: 'border-box'
   },
-  ageGrid: {
-    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%'
+  ageGrid: { 
+    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%' 
   },
-  ageButton: {
-    padding: '10px', borderRadius: '12px', border: '1px solid #ffd700',
-    backgroundColor: 'transparent', color: '#ffd700', fontWeight: 'bold',
-    fontSize: '0.9rem', cursor: 'pointer', transition: 'all 0.2s'
+  ageButton: { 
+    padding: '12px', borderRadius: '12px', border: '1px solid #00f2ff', 
+    backgroundColor: 'transparent', color: '#00f2ff', fontWeight: 'bold', 
+    fontSize: '0.95rem', cursor: 'pointer', transition: 'all 0.2s'
   },
-  ageButtonActive: {
-    backgroundColor: '#ffd700', color: '#05081c'
+  ageButtonActive: { 
+    backgroundColor: '#00f2ff', color: '#05081c', boxShadow: '0 0 10px rgba(0, 242, 255, 0.4)' 
   },
-  joinContainer: {
-    width: '100%', backgroundColor: 'rgba(255, 215, 0, 0.05)', borderRadius: '20px',
-    padding: '12px', border: '1px solid rgba(255, 215, 0, 0.2)', 
-    display: 'flex', flexDirection: 'column', gap: '10px'
+  joinContainer: { 
+    width: '100%', backgroundColor: 'rgba(0, 242, 255, 0.05)', borderRadius: '20px', 
+    padding: '15px', border: '1px solid rgba(0, 242, 255, 0.2)', 
+    display: 'flex', flexDirection: 'column', gap: '12px', boxSizing: 'border-box'
   },
   primaryButton: { 
-    width: '100%', height: '3.5em', borderRadius: '16px', 
-    backgroundColor: '#ffd700', color: '#05081c', fontWeight: '900', 
-    border: 'none', fontSize: '1.3rem', cursor: 'pointer',
-    boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)'
+    width: '100%', height: '3.5em', borderRadius: '16px', backgroundColor: '#00f2ff', 
+    color: '#05081c', fontWeight: '900', border: 'none', fontSize: '1.3rem', 
+    cursor: 'pointer', boxShadow: '0 4px 15px rgba(0, 242, 255, 0.3)' 
   },
   secondaryButton: { 
-    width: '100%', height: '3em', borderRadius: '14px', 
-    backgroundColor: 'transparent', color: 'rgba(255, 215, 0, 0.7)', fontWeight: 'bold', 
-    border: '1px solid rgba(255, 215, 0, 0.3)', fontSize: '1rem', cursor: 'pointer'
+    width: '100%', height: '3.2em', borderRadius: '14px', backgroundColor: 'transparent', 
+    color: 'rgba(0, 242, 255, 0.8)', fontWeight: 'bold', 
+    border: '1px solid rgba(0, 242, 255, 0.3)', fontSize: '1.1rem', 
+    cursor: 'pointer', marginBottom: '10px'
   }
 };
 
-interface EntryStepProps {
-  onJoin: (code: string) => void;
-  onCreate: () => void;
-  onSetName: (name: string) => void;
-  onSetAge: (age: string) => void;
-}
-
-export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: EntryStepProps) {
+export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: any) {
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [inputCode, setInputCode] = useState("");
   const [hasUrlCode, setHasUrlCode] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const roomFromUrl = params.get('room');
-      if (roomFromUrl) {
-        setInputCode(roomFromUrl.trim().toUpperCase());
-        setHasUrlCode(true);
-      }
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('room');
+    if (code) {
+      setInputCode(code.toUpperCase());
+      setHasUrlCode(true);
     }
   }, []);
 
   const handleAgeSelect = (val: string) => {
     setAge(val);
     onSetAge(val);
-    
-    if (hasUrlCode && name.trim() && inputCode.trim()) {
-        setTimeout(() => {
-            onJoin(inputCode.trim().toUpperCase());
-        }, 100);
-    }
   };
 
-  const validate = (action: 'create' | 'join') => {
-    if (!name.trim()) { alert("אנא הכנס שם שחקן 🙂"); return; }
-    if (!age) { alert("אנא בחר קבוצת גיל 🙂"); return; }
-
-    if (action === 'join') {
-      if (!inputCode.trim()) { alert("אנא הכנס קוד חדר כדי להצטרף"); return; }
-      onJoin(inputCode.trim().toUpperCase());
-    } else {
-      onCreate();
-    }
+  const validate = (action: 'join' | 'create') => {
+    if (!name.trim()) return alert("אנא הכנס שם שחקן");
+    if (!age) return alert("אנא בחר קבוצת גיל");
+    if (action === 'join' && !inputCode.trim()) return alert("אנא הכנס קוד חדר");
+    
+    if (action === 'join') onJoin(inputCode.trim());
+    else onCreate();
   };
 
   const ageCategories = [
@@ -123,23 +110,22 @@ export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: Ent
 
   return (
     <div style={localStyles.flexLayout}>
-      {/* Top Section - לוגו מוגדל וכותרת בשורה אחת */}
       <div style={localStyles.topSection}>
         <img src="/logo.webp" alt="Logo" style={localStyles.entryLogo} />
-        <h1 style={localStyles.entryTitle}>נראה אתכם תופסים את המילה הנרדפת</h1>
+        <h1 style={localStyles.entryTitle}>נראה אתכם תופסים את הסלב</h1>
       </div>
 
-      {/* Main Form Section */}
       <div style={localStyles.formSection}>
-        {/* Name Input - כותרת "איך קוראים לך" הוסרה */}
         <div style={localStyles.inputGroup}>
+          <label style={localStyles.label}>מה השם שלך?</label>
           <input 
             type="text" value={name} 
             onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} 
-            placeholder="הכנס שם שחקן" style={localStyles.entryInput} 
+            placeholder="הכנס שם שחקן" 
+            style={localStyles.entryInput} 
           />
         </div>
-        
+
         <div style={localStyles.inputGroup}>
           <label style={localStyles.label}>באיזו קבוצת גיל אתה?</label>
           <div style={localStyles.ageGrid}>
@@ -158,7 +144,6 @@ export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: Ent
           </div>
         </div>
 
-        {/* JOIN SECTION */}
         <div style={localStyles.joinContainer}>
           <input 
             type="text" value={inputCode} 
@@ -170,19 +155,16 @@ export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: Ent
             הצטרפות למשחק
           </button>
           {hasUrlCode && (
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '-5px' }}>
+            <p style={{ color: 'rgba(0, 242, 255, 0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '-5px' }}>
               כניסה אוטומטית לחדר: {inputCode}
             </p>
           )}
         </div>
       </div>
 
-      {/* Bottom Section */}
-      <div style={{ width: '100%', maxWidth: '400px' }}>
-        <button onClick={() => validate('create')} style={localStyles.secondaryButton}>
-          + פתיחת חדר חדש
-        </button>
-      </div>
+      <button onClick={() => validate('create')} style={localStyles.secondaryButton}>
+        + פתיחת חדר חדש
+      </button>
     </div>
   );
 }
