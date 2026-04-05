@@ -13,22 +13,22 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
       const myTeamName = roomData.teamNames[me?.teamIdx];
       return roomData.totalScores[myTeamName] || 0;
     }
-  }, [roomData.totalScores, roomData.gameMode, me]);
+  }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
-    const difficulty = roomData.difficulty || "age-appropriate";
-    const idxs = roomData.poolIndices || { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 };
-    const pool = roomData.shuffledPools?.JUNIOR || [];
-    const index = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT) || 0;
+    const difficulty = roomData.difficulty || "easy";
+    // שימוש במאגר המאוחד ובאינדקס הפשוט
+    const pool = roomData.shuffledPools || [];
+    const index = roomData.poolIndex || 0;
     
-    // הצגת תמונה נקבעת כעת רק לפי רמת הקושי
+    // הצגת תמונה נקבעת כעת רק לפי רמת הקושי (Easy = מציג)
     const showImage = difficulty === "easy";
     
     return { 
-      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "" }), 
+      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" }), 
       showImage
     };
-  }, [roomData.poolIndices, roomData.shuffledPools, roomData.difficulty]);
+  }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty]);
 
   return (
     <div style={s.layout}>

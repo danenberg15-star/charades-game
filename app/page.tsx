@@ -12,7 +12,7 @@ import VictoryStep from "./components/VictoryStep";
 import SevenBoomStep from "./components/SevenBoomStep";
 
 export default function FamilyAliasApp() {
-  // הסרתי את setUserAge כי הגיל כבר לא חלק מהמשחק
+  // הסרתי את setUserAge כי אין יותר שימוש בגיל במערכת
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName } = useGameState();
 
   const currentP = roomData?.players?.[roomData?.currentTurnIdx];
@@ -31,25 +31,30 @@ export default function FamilyAliasApp() {
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
         else {
-          updateRoom({ step: 6, poolIndices: { ...roomData.poolIndices, JUNIOR: (roomData.poolIndices?.JUNIOR || 0) + 1 }, phaseEnded: null });
+          // עדכון אינדקס המילים כעת הוא מספר פשוט
+          updateRoom({ 
+            step: 6, 
+            poolIndex: (roomData.poolIndex || 0) + 1, 
+            phaseEnded: null 
+          });
         }
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [step, roomId, roomData?.preGameTimer, roomData?.timeLeft, roomData?.isPaused, isIDescriber, currentP, updateRoom]);
+  }, [step, roomId, roomData?.preGameTimer, roomData?.timeLeft, roomData?.isPaused, isIDescriber, currentP, updateRoom, roomData?.poolIndex]);
 
   if (!mounted) return null;
 
   const handleScoreAction = (targetName: string, points: number = 1) => {
     if (roomData.isPaused) return;
-    const newIndices = { ...roomData.poolIndices, JUNIOR: (roomData.poolIndices?.JUNIOR || 0) + 1 };
+    const newIndex = (roomData.poolIndex || 0) + 1;
     const newScores = { ...roomData.totalScores };
 
     if (targetName === "SKIP") {
       const entity = roomData.gameMode === "individual" ? currentP.name : roomData.teamNames[currentP.teamIdx];
       const penalty = roomData.currentPhase === 'A' ? 0 : 2;
       newScores[entity] = (newScores[entity] || 0) - penalty;
-      updateRoom({ roundScore: (roomData.roundScore || 0) - penalty, poolIndices: newIndices, totalScores: newScores });
+      updateRoom({ roundScore: (roomData.roundScore || 0) - penalty, poolIndex: newIndex, totalScores: newScores });
       return;
     }
 
@@ -57,25 +62,39 @@ export default function FamilyAliasApp() {
       const describerEntity = roomData.gameMode === "individual" ? currentP.name : roomData.teamNames[currentP.teamIdx];
       newScores[describerEntity] = (newScores[describerEntity] || 0) + 1;
       newScores[targetName] = (newScores[targetName] || 0) + 1;
-      const pool = roomData.shuffledPools?.JUNIOR || [];
-      const updatedDeck = [...(roomData.gameDeck || []), pool[roomData.poolIndices?.JUNIOR % (pool.length || 1)]];
+      
+      const pool = roomData.shuffledPools || [];
+      const currentWord = pool[roomData.poolIndex % (pool.length || 1)];
+      const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const uniquePlayersCount = new Set(roomData.players.map((p: any) => p.id)).size;
       
       if (updatedDeck.length >= uniquePlayersCount * 5) {
         updateRoom({ 
-          totalScores: newScores, poolIndices: { JUNIOR: 0 }, 
-          shuffledPools: { JUNIOR: shuffleArray(updatedDeck) }, currentPhase: 'B', 
-          gameDeck: updatedDeck, step: 6, phaseEnded: 'א' 
+          totalScores: newScores, 
+          poolIndex: 0, 
+          shuffledPools: shuffleArray(updatedDeck), 
+          currentPhase: 'B', 
+          gameDeck: updatedDeck, 
+          step: 6, 
+          phaseEnded: 'א' 
         });
-      } else updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndices: newIndices, gameDeck: updatedDeck });
+      } else {
+        updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndex: newIndex, gameDeck: updatedDeck });
+      }
     } else {
       newScores[targetName] = (newScores[targetName] || 0) + points;
       if (roomData.gameMode === "individual") newScores[currentP.name] = (newScores[currentP.name] || 0) + points;
-      const pool = roomData.shuffledPools?.JUNIOR || [];
-      if (newIndices.JUNIOR >= pool.length) {
-        if (roomData.currentPhase === 'B') updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndices: { JUNIOR: 0 }, step: 6, phaseEnded: 'ב' });
-        else updateRoom({ totalScores: newScores, step: 7, winner: Object.keys(newScores).reduce((a, b) => newScores[a] > newScores[b] ? a : b) });
-      } else updateRoom({ roundScore: (roomData.roundScore || 0) + points, poolIndices: newIndices, totalScores: newScores });
+      
+      const pool = roomData.shuffledPools || [];
+      if (newIndex >= pool.length) {
+        if (roomData.currentPhase === 'B') {
+          updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndex: 0, step: 6, phaseEnded: 'ב' });
+        } else {
+          updateRoom({ totalScores: newScores, step: 7, winner: Object.keys(newScores).reduce((a, b) => newScores[a] > newScores[b] ? a : b) });
+        }
+      } else {
+        updateRoom({ roundScore: (roomData.roundScore || 0) + points, poolIndex: newIndex, totalScores: newScores });
+      }
     }
   };
 
@@ -90,15 +109,22 @@ export default function FamilyAliasApp() {
       {step === 3 && roomData && (
         <SetupStep 
           roomId={roomId!} gameMode={roomData.gameMode} setGameMode={(m) => updateRoom({ gameMode: m })} 
-          difficulty={roomData.difficulty || "age-appropriate"} setDifficulty={(d) => updateRoom({ difficulty: d })} 
+          difficulty={roomData.difficulty || "easy"} setDifficulty={(d) => updateRoom({ difficulty: d })} 
           numTeams={roomData.numTeams} setNumTeams={(n) => updateRoom({ numTeams: n })} players={roomData.players} 
           teamNames={roomData.teamNames} updateTeamNames={(names) => updateRoom({ teamNames: names })} 
           onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
           editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
           onStart={() => {
-            // איסוף מילים מותאמות אישית מכל השחקנים בחדר
             const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
-            updateRoom({ step: 4, preGameTimer: 3, shuffledPools: getInitialShuffledPools(allCustom), poolIndices: { JUNIOR: 0 }, roundScore: 0, currentPhase: 'A', gameDeck: [] });
+            updateRoom({ 
+              step: 4, 
+              preGameTimer: 3, 
+              shuffledPools: getInitialShuffledPools(allCustom), 
+              poolIndex: 0, 
+              roundScore: 0, 
+              currentPhase: 'A', 
+              gameDeck: [] 
+            });
           }} 
           onExit={handleFullReset} 
         />

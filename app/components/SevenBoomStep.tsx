@@ -16,10 +16,9 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
   }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
-    const difficulty = roomData.difficulty || "age-appropriate";
-    const idxs = roomData.poolIndices || { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 };
-    const pool = roomData.shuffledPools?.JUNIOR || [];
-    const index = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT) || 0;
+    const difficulty = roomData.difficulty || "easy";
+    const pool = roomData.shuffledPools || [];
+    const index = roomData.poolIndex || 0;
     
     // הצגת תמונה נקבעת כעת רק לפי רמת הקושי
     const showImage = difficulty === "easy";
@@ -28,7 +27,7 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
       ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" }), 
       showImage
     };
-  }, [roomData.poolIndices, roomData.shuffledPools, roomData.difficulty]);
+  }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty]);
 
   const handleCorrect = (teamName: string) => {
     handleAction(teamName, 2);
