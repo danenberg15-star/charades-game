@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore"; // נוסף increment
 import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
 
 export function useGameState() {
@@ -64,7 +64,6 @@ export function useGameState() {
       const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
       localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
       
-      // אתחול מלא לחדר עומר כולל מאגר מילים
       await setDoc(doc(db, "rooms", "עומר"), { 
         id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
         gameMode: "team", numTeams: 2, difficulty: "easy", 
@@ -83,5 +82,6 @@ export function useGameState() {
     } else alert("חדר לא נמצא");
   };
 
-  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom };
+  // ייצוא increment לשימוש ב-page.tsx
+  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };
 }

@@ -12,7 +12,7 @@ import VictoryStep from "./components/VictoryStep";
 import SevenBoomStep from "./components/SevenBoomStep";
 
 export default function FamilyAliasApp() {
-  const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName } = useGameState();
+  const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
 
   const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
@@ -26,10 +26,19 @@ export default function FamilyAliasApp() {
     const interval = setInterval(() => {
       if (step === 4) {
         if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); // QA: 5s
+        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); 
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
-        else updateRoom({ step: 6, poolIndex: (roomData.poolIndex || 0) + 1, phaseEnded: null });
+        else {
+          const newIndex = (roomData.poolIndex || 0) + 1;
+          if (newIndex >= (roomData.shuffledPools?.length || 0) && roomData.currentPhase !== 'A') {
+             const nextPhase = roomData.currentPhase === 'B' ? 'C' : 'FINISH';
+             if (nextPhase === 'FINISH') updateRoom({ step: 7 });
+             else updateRoom({ step: 6, currentPhase: nextPhase, poolIndex: 0, phaseEnded: roomData.currentPhase });
+          } else {
+             updateRoom({ step: 6, poolIndex: newIndex });
+          }
+        }
       }
     }, 1000);
     return () => clearInterval(interval);
@@ -40,53 +49,59 @@ export default function FamilyAliasApp() {
   const handleScoreAction = (targetName: string, points: number = 1) => {
     if (!roomData || !currentP || roomData.isPaused) return;
     const newIndex = (roomData.poolIndex || 0) + 1;
-    const newScores = { ...roomData.totalScores };
     const describerTeam = roomData.teamNames[currentP.teamIdx];
 
     if (targetName === "SKIP") {
-      if (roomData.currentPhase === 'A') updateRoom({ poolIndex: newIndex });
-      else {
-        newScores[describerTeam] = (newScores[describerTeam] || 0) - 2; // קנס 2- בסבב ב/ג
-        updateRoom({ roundScore: (roomData.roundScore || 0) - 2, poolIndex: newIndex, totalScores: newScores });
+      if (roomData.currentPhase === 'A') {
+        updateRoom({ poolIndex: newIndex });
+      } else {
+        updateRoom({ 
+          [`totalScores.${describerTeam}`]: increment(-2), 
+          roundScore: increment(-2), 
+          poolIndex: newIndex 
+        });
       }
       return;
     }
 
     if (roomData.currentPhase === 'A') {
-      newScores[describerTeam] = (newScores[describerTeam] || 0) + 1;
-      newScores[targetName] = (newScores[targetName] || 0) + 1;
-      
       const pool = roomData.shuffledPools || [];
       const currentWord = pool[roomData.poolIndex % (pool.length || 1)];
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
       
-      // בדיקה אם הגענו ל-N*5 (בחדר עומר: 30 מילים)
+      const updates: any = {
+        [`totalScores.${describerTeam}`]: increment(1),
+        [`totalScores.${targetName}`]: increment(1),
+        poolIndex: newIndex,
+        roundScore: increment(1),
+        gameDeck: updatedDeck
+      };
+
       if (updatedDeck.length >= nPlayers * 5) {
-        updateRoom({ 
-          totalScores: newScores, 
-          poolIndex: 0, 
-          shuffledPools: shuffleArray(updatedDeck), 
-          currentPhase: 'B', 
-          gameDeck: updatedDeck, 
-          step: 6, 
-          phaseEnded: 'א' 
-        });
-      } else {
-        updateRoom({ totalScores: newScores, roundScore: (roomData.roundScore || 0) + 1, poolIndex: newIndex, gameDeck: updatedDeck });
+        Object.assign(updates, { poolIndex: 0, shuffledPools: shuffleArray(updatedDeck), currentPhase: 'B', step: 6, phaseEnded: 'א' });
       }
+      updateRoom(updates);
     } else {
-      newScores[targetName] = (newScores[targetName] || 0) + points;
       const pool = roomData.shuffledPools || [];
+      const updates: any = {
+        [`totalScores.${targetName}`]: increment(points),
+        roundScore: increment(points),
+        poolIndex: newIndex
+      };
+
       if (newIndex >= pool.length) {
-        if (roomData.currentPhase === 'B') updateRoom({ totalScores: newScores, currentPhase: 'C', poolIndex: 0, step: 6, phaseEnded: 'ב' });
-        else updateRoom({ totalScores: newScores, step: 7, winner: Object.keys(newScores).reduce((a, b) => newScores[a] > newScores[b] ? a : b) });
-      } else {
-        updateRoom({ roundScore: (roomData.roundScore || 0) + points, poolIndex: newIndex, totalScores: newScores });
-      }
+        const nextPhase = roomData.currentPhase === 'B' ? 'C' : 'FINISH';
+        if (nextPhase === 'FINISH') {
+           updateRoom({ ...updates, step: 7 });
+        } else {
+           updateRoom({ ...updates, currentPhase: nextPhase, poolIndex: 0, step: 6, phaseEnded: roomData.currentPhase });
+        }
+      } else updateRoom(updates);
     }
   };
 
+  // תיקון: הגדרת מטרות הניחוש לפי השלב במשחק
   const gameTargets = roomData?.currentPhase === 'A' || step === 8
     ? (roomData.teamNames.slice(0, roomData.numTeams) || [])
     : [roomData?.teamNames[currentP?.teamIdx]];
@@ -134,7 +149,7 @@ export default function FamilyAliasApp() {
               }} 
             />
           )}
-          {step === 7 && <VictoryStep winnerName={roomData.winner} onRestart={handleFullReset} />}
+          {step === 7 && <VictoryStep winnerName={Object.keys(roomData.totalScores).reduce((a, b) => roomData.totalScores[a] > roomData.totalScores[b] ? a : b)} onRestart={handleFullReset} />}
           {step === 8 && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
         </>
       )}
