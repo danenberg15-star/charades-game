@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, CSSProperties } from "react";
+import React, { useState, CSSProperties } from "react";
 
 const localStyles: { [key: string]: CSSProperties } = {
   flexLayout: { 
@@ -82,13 +82,13 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
             </select>
             <button onClick={addCustomWord} style={localStyles.addBtn}>+ הוסף שם לחבילה</button>
           </div>
-          <div style={{marginTop: '10px'}}>
+          <div style={{marginTop: '10px', maxHeight: '100px', overflowY: 'auto'}}>
             {customWords.map((w, i) => <span key={i} style={localStyles.wordTag}>{w.word} ({w.category})</span>)}
           </div>
         </div>
 
-        <div style={{...localStyles.joinContainer, display: 'flex', flexDirection: 'column', gap: '10px'}}>
-          <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="קוד חדר" style={{...localStyles.entryInput, backgroundColor: 'rgba(0,0,0,0.2)'}} />
+        <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+          <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="קוד חדר להצטרפות" style={{...localStyles.entryInput, backgroundColor: 'rgba(0,0,0,0.2)'}} />
           <button onClick={() => validate('join')} style={localStyles.primaryButton}>הצטרפות</button>
         </div>
       </div>

@@ -11,10 +11,14 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// מקבל שמות מותאמים אישית ומציב אותם בראש הרשימה
+/**
+ * פונקציה המקבלת את השמות שהוזנו ידנית על ידי השחקנים
+ * ומחזירה מאגר שבו השמות הללו מופיעים ראשונים, ולאחריהם שאר המאגר המשורבל
+ */
 export const getInitialShuffledPools = (customWords: any[] = []) => {
   const shuffledCelebs = shuffleArray(CELEBS_WORDS);
-  // הוספת המילים המותאמות אישית לפני המאגר המשורבל
+  
+  // השמות המותאמים אישית מוצבים בראש הרשימה
   const combinedPool = [...customWords, ...shuffledCelebs];
   
   return {

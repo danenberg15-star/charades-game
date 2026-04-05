@@ -16,32 +16,19 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
   }, [roomData.totalScores, roomData.gameMode, me, roomData.teamNames]);
 
   const wordData = useMemo(() => {
-    const age = parseInt(currentP.age) || 21;
     const difficulty = roomData.difficulty || "age-appropriate";
     const idxs = roomData.poolIndices || { KIDS: 0, JUNIOR: 0, TEEN: 0, ADULT: 0 };
-    const totalIdx = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT);
+    const pool = roomData.shuffledPools?.JUNIOR || [];
+    const index = (idxs.KIDS + idxs.JUNIOR + idxs.TEEN + idxs.ADULT) || 0;
     
-    let key: "KIDS" | "JUNIOR" | "TEEN" | "ADULT";
-    if (difficulty === "easy") key = (totalIdx % 2 === 0) ? "KIDS" : "JUNIOR";
-    else if (age <= 6) key = (totalIdx % 5 < 4) ? "KIDS" : "JUNIOR";
-    else if (age <= 12) key = (totalIdx % 10 < 2) ? "KIDS" : "JUNIOR";
-    else if (age <= 20) {
-      const mod = totalIdx % 10;
-      key = mod === 0 ? "JUNIOR" : (mod < 9 ? "TEEN" : "ADULT");
-    } else {
-      const mod = totalIdx % 10;
-      key = mod === 0 ? "JUNIOR" : (mod === 1 ? "TEEN" : "ADULT");
-    }
-
-    const pool = roomData.shuffledPools?.[key] || [];
-    const index = idxs[key] || 0;
-    const showImage = age <= 12 || difficulty === "easy";
+    // הצגת תמונה נקבעת כעת רק לפי רמת הקושי
+    const showImage = difficulty === "easy";
 
     return { 
-      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "" }), 
+      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" }), 
       showImage
     };
-  }, [roomData.currentTurnIdx, roomData.poolIndices, roomData.shuffledPools, roomData.difficulty, currentP.age]);
+  }, [roomData.poolIndices, roomData.shuffledPools, roomData.difficulty]);
 
   const handleCorrect = (teamName: string) => {
     handleAction(teamName, 2);
@@ -87,23 +74,28 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
           <div style={s.card}>
             {isIDescriber ? (
               <>
-                {wordData.showImage && wordData.img && <div style={s.imgBox}><img src={wordData.img} alt="" style={s.img} /></div>}
+                {wordData.showImage && wordData.img && (
+                  <div style={s.imgBox}>
+                    <img src={wordData.img} alt="" style={s.img} />
+                  </div>
+                )}
                 <div style={wordData.showImage ? s.heb : s.hebL}>{wordData.word}</div>
                 <div style={wordData.showImage ? s.en : s.enL}>{wordData.en}</div>
+                <div style={s.catLabel}>{wordData.category}</div>
               </>
             ) : (
               <div style={{ textAlign: 'center' }}>
-                <h2 style={{ color: '#00f2ff', fontSize: '2rem', fontWeight: '900' }}>{currentP.name} מתאר/ת...</h2>
-                <p style={{ opacity: 0.7 }}>כל הקבוצות יכולות לנחש!</p>
+                <h2 style={{ color: '#00f2ff', fontSize: '2rem', marginBottom: '10px' }}>{currentP.name}</h2>
+                <p style={{ opacity: 0.8, fontSize: '1.2rem' }}>מתאר/ת עכשיו (7 בום)...</p>
+                <p style={{ opacity: 0.6 }}>כל הקבוצות יכולות לנחש!</p>
               </div>
             )}
           </div>
       </div>
 
-      {/* כפתורי בחירת קבוצה - גלויים למתאר בלבד */}
       {isIDescriber && (
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, color: 'white' }}>מי ניחש נכון? (2+)</p>
+          <p style={{ textAlign: 'center', fontSize: '0.9rem', opacity: 0.8, color: '#00f2ff' }}>מי ניחש נכון? (2+)</p>
           <div style={s.grid}>
             {roomData.teamNames.slice(0, roomData.numTeams).map((n: string) => (
               <button key={n} onClick={() => handleCorrect(n)} style={s.target}>{n}</button>
@@ -116,13 +108,13 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
 }
 
 const s: any = {
-  layout: { display: 'flex', flexDirection: 'column', height: '100dvh', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', backgroundColor: '#05081c' },
+  layout: { display: 'flex', flexDirection: 'column', height: '100%', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '70px', position: 'relative' },
   scoreBox: { backgroundColor: 'rgba(0, 242, 255, 0.15)', padding: '8px 15px', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', fontSize: '1.2rem' },
   timer: { fontSize: '2rem', fontWeight: '900', color: '#00f2ff' },
-  icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer' },
+  icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem' },
   skip: { width: '100%', minHeight: '55px', border: '2px dashed #ef4444', borderRadius: '15px', color: '#ef4444', fontWeight: 'bold', background: 'none', cursor: 'pointer' },
-  center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '10px 0' },
+  center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   card: { width: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid rgba(0, 242, 255, 0.1)' },
   imgBox: { height: '150px', marginBottom: '10px' },
   img: { height: '100%', objectFit: 'contain' },
@@ -130,8 +122,9 @@ const s: any = {
   hebL: { fontSize: '2.5rem', fontWeight: '900', wordBreak: 'break-word', textAlign: 'center', color: 'white' },
   en: { fontSize: '1.2rem', opacity: 0.6, wordBreak: 'break-word', textAlign: 'center', color: '#00f2ff' }, 
   enL: { fontSize: '1.5rem', opacity: 0.6, wordBreak: 'break-word', textAlign: 'center', color: '#00f2ff' },
+  catLabel: { marginTop: '10px', fontSize: '0.8rem', backgroundColor: 'rgba(0, 242, 255, 0.2)', padding: '4px 12px', borderRadius: '15px', color: '#00f2ff' },
   grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' },
   target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', background: 'none', cursor: 'pointer' },
   pauseBox: { backgroundColor: '#0f172a', borderRadius: '24px', padding: '25px', border: '1px solid #00f2ff' },
-  resume: { height: '55px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '15px', fontWeight: '900', border: 'none', width: '100%', cursor: 'pointer' }
+  resume: { height: '55px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '15px', fontWeight: '900', border: 'none', width: '100%', fontSize: '1.1rem', cursor: 'pointer' }
 };
