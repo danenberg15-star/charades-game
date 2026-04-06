@@ -9,7 +9,7 @@ const localStyles: { [key: string]: CSSProperties } = {
     direction: 'rtl', boxSizing: 'border-box', padding: '20px', overflowY: 'auto'
   },
   topSection: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' },
-  entryLogo: { width: '80%', height: 'auto', maxHeight: '15vh', objectFit: 'contain' },
+  entryLogo: { width: '80%', height: 'auto', maxHeight: '30vh', objectFit: 'contain', borderRadius: '25px' },
   entryTitle: { color: '#00f2ff', fontSize: 'clamp(1.2rem, 5vw, 1.8rem)', fontWeight: '900', textAlign: 'center' },
   formSection: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
@@ -58,7 +58,6 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
   const [inputCode, setInputCode] = useState("");
   const [customWords, setCustomWords] = useState<any[]>([]);
   
-  // שדות להוספת מילה חדשה
   const [newHeb, setNewHeb] = useState("");
   const [newEn, setNewEn] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
@@ -81,8 +80,8 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
   return (
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
-        <img src="/logo.webp" alt="Logo" style={localStyles.entryLogo} />
-        <h1 style={localStyles.entryTitle}>תופסים את הסלב</h1>
+        <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
+        <h1 style={localStyles.entryTitle}>SAME-SAME</h1>
       </div>
 
       <div style={localStyles.formSection}>

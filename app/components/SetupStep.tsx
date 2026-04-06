@@ -26,7 +26,6 @@ export default function SetupStep(props: SetupStepProps) {
   const ghostRef = useRef<HTMLDivElement>(null);
   const teamRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
 
-  // מניעת גלילה בזמן גרירה במובייל
   useEffect(() => {
     const preventDefault = (e: TouchEvent) => {
       if (draggedPlayer) e.preventDefault();
@@ -89,10 +88,9 @@ export default function SetupStep(props: SetupStepProps) {
     if (found !== hoveredTeam) setHoveredTeam(found);
   };
 
-  // תיקון: עדכון טקסט השיתוף והכתובת למשחק "תופסים את הסלב"
   const handleWhatsAppShare = () => {
     const shareUrl = `${window.location.origin}/?room=${props.roomId}`;
-    const text = `בואו לשחק איתי "נחשו את הסלב"! כנסו לקישור והצטרפו לחדר: ${shareUrl}`;
+    const text = `בואו לשחק איתי SAME-SAME (The Red Carpet Version)! כנסו לקישור והצטרפו לחדר: ${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 

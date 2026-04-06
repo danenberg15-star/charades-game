@@ -2,39 +2,36 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  // הכותרת שתופיע בלשונית הדפדפן
-  title: "מילה נרדפת | SAME-SAME",
-  description: "משחק אוצר מילים משפחתי ומאתגר. בואו למצוא את המילה הנרדפת!",
+  title: "SAME-SAME | The Red Carpet Version",
+  description: "משחק לזיהוי מפורסמים בפנטומימה. בואו לזהות את המפורסם!",
   manifest: "/manifest.json",
   formatDetection: {
     telephone: false,
   },
-  // הגדרות קריטיות עבור תצוגה מקדימה בוואטסאפ (OpenGraph)
   openGraph: {
-    title: "מילה נרדפת - SAME-SAME", // התיקון כאן: הוספתי את המילה "מילה"
-    description: "אותה משמעות, מילה אחרת. מוכנים לאתגר המילים הגדול?",
-    url: 'https://same-same.vercel.app/',
-    siteName: 'SAME-SAME',
+    title: "SAME-SAME - The Red Carpet Version",
+    description: "משחק לזיהוי מפורסמים בפנטומימה. בואו לזהות את המפורסם!",
+    url: 'https://game-charades.one.vercel.app/',
+    siteName: 'SAME-SAME - The Red Carpet Version',
     images: [
       {
-        url: '/logo.webp', 
-        width: 800,
-        height: 600,
+        url: '/icon.jpg',
+        width: 1024,
+        height: 1024,
         alt: 'SAME-SAME Logo',
       },
     ],
     locale: 'he_IL',
     type: 'website',
   },
-  // הגדרות להתקנה כאפליקציה (PWA) באייפון
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "SAME-SAME",
   },
   icons: {
-    apple: "/icon-192x192.png",
-    shortcut: "/icon-192x192.png",
+    apple: "/icon.jpg",
+    shortcut: "/icon.jpg",
   },
 };
 
