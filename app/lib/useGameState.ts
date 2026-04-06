@@ -43,13 +43,15 @@ export function useGameState() {
   };
 
   const handleFullReset = async () => { 
-    if (roomId === "עומר") {
+    // איפוס חדר עומר מהשרת אם קיים
+    if (roomId === "עומר" || localStorage.getItem("alias_roomId") === "עומר") {
       try {
         await deleteDoc(doc(db, "rooms", "עומר"));
       } catch (e) {
         console.error("Error clearing QA room", e);
       }
     }
+    // ניקוי זיכרון מקומי וחזרה לדף הבית 
     localStorage.clear(); 
     window.location.href = '/'; 
   };
@@ -76,13 +78,11 @@ export function useGameState() {
 
     try {
       let targetStep = 0;
-      
       await runTransaction(db, async (transaction) => {
         const roomRef = doc(db, "rooms", id);
         const snap = await transaction.get(roomRef);
         
         if (!snap.exists()) {
-          // אם זה חדר עומר והוא לא קיים, יוצרים אותו בצורה מסודרת
           if (id === "עומר") {
             const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
             transaction.set(roomRef, { 
@@ -100,7 +100,6 @@ export function useGameState() {
           }
         }
         
-        // החדר קיים (כולל חדר עומר פעיל) - מוסיפים את השחקן למערך בלי לדרוס
         const data = snap.data();
         targetStep = data.step;
 
@@ -115,10 +114,7 @@ export function useGameState() {
             updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
           }
 
-          transaction.update(roomRef, {
-            players: updatedPlayers,
-            lastActivity: Date.now() 
-          });
+          transaction.update(roomRef, { players: updatedPlayers, lastActivity: Date.now() });
         }
       });
 
@@ -128,12 +124,8 @@ export function useGameState() {
       setStep(targetStep); 
       
     } catch (error: any) {
-      if (error.message === "ROOM_NOT_FOUND") {
-        alert("חדר לא נמצא");
-      } else {
-        console.error("Join transaction failed: ", error);
-        alert("שגיאה בהצטרפות לחדר, נסה שוב");
-      }
+      if (error.message === "ROOM_NOT_FOUND") alert("חדר לא נמצא");
+      else { console.error("Join transaction failed: ", error); alert("שגיאה בהצטרפות לחדר, נסה שוב"); }
     }
   };
 

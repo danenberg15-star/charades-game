@@ -35,6 +35,9 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
 
   return (
     <div style={s.layout}>
+      {/* כפתור יציאה (X) לאיפוס המשחק */}
+      <button onClick={onExit} style={s.exitBtn}>✕</button>
+
       {/* תפריט השהייה עם עריכת נקודות */}
       {roomData.isPaused && (
         <div style={s.pauseOverlay}>
@@ -119,9 +122,10 @@ const s: any = {
   layout: { 
     display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh', 
     padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', 
-    margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto' 
+    margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto', position: 'relative'
   },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '60px', flexShrink: 0 },
+  exitBtn: { position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '60px', flexShrink: 0, paddingLeft: '45px' },
   scoreBox: { backgroundColor: 'rgba(0, 242, 255, 0.15)', padding: '8px 15px', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', fontSize: '1.2rem' },
   timer: { fontSize: '2.5rem', fontWeight: '900' },
   icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer' },
@@ -140,8 +144,6 @@ const s: any = {
   catLabel: { marginTop: '10px', fontSize: '0.8rem', backgroundColor: 'rgba(0, 242, 255, 0.2)', padding: '4px 12px', borderRadius: '15px', color: '#00f2ff' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '15px', flexShrink: 0 },
   target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none', cursor: 'pointer' },
-  
-  // סגנונות חדשים עבור תפריט ההשהייה (Pause Overlay)
   pauseOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', backgroundColor: 'rgba(5, 8, 28, 0.95)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', direction: 'rtl' },
   pauseModal: { backgroundColor: '#1a1d2e', borderRadius: '25px', padding: '30px', width: '100%', maxWidth: '400px', border: '1px solid #00f2ff', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' },
   closePause: { position: 'absolute', top: '15px', left: '15px', background: 'none', border: 'none', color: '#ef4444', fontSize: '1.5rem', fontWeight: 'bold', cursor: 'pointer' },
