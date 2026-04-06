@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, increment } from "firebase/firestore";
 import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
 
 export function useGameState() {
@@ -21,7 +21,8 @@ export function useGameState() {
 
   useEffect(() => {
     if (!roomId) return;
-    return onSnapshot(doc(db, "rooms", roomId), async (snap) => {
+    // הסרנו את step מרשימת התלויות למטה כדי למנוע ניתוקים של ה-Listener
+    const unsub = onSnapshot(doc(db, "rooms", roomId), async (snap) => {
       if (snap.exists()) {
         const d = snap.data();
         const INACTIVITY_LIMIT = 5 * 60 * 1000; 
@@ -30,16 +31,19 @@ export function useGameState() {
             handleFullReset(); return;
         }
         setRoomData(d);
-        if (d.step !== step) setStep(d.step);
-      } else if (roomId) handleFullReset();
+        // שימוש ב-Callback כדי לעדכן רק אם יש שינוי, מבלי להסתמך על step החיצוני
+        setStep((prevStep) => d.step !== prevStep ? d.step : prevStep);
+      } else if (roomId) {
+          handleFullReset();
+      }
     });
-  }, [roomId, step, userId]);
+    return () => unsub();
+  }, [roomId, userId]);
 
   const updateRoom = async (newData: any) => { 
     if (roomId) await updateDoc(doc(db, "rooms", roomId), { ...newData, lastActivity: Date.now() }); 
   };
 
-  // הפתרון שלך: בלחיצה על X או סיום, מוחקים את חדר עומר מ-Firebase כדי שה-QA הבא יהיה נקי
   const handleFullReset = async () => { 
     if (roomId === "עומר") {
       try {
@@ -54,9 +58,7 @@ export function useGameState() {
 
   const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
     const id = generateRoomCode();
-    setRoomId(id); setStep(3);
-    localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
-
+    // יצירת החדר ב-DB לפני המעבר אליו
     await setDoc(doc(db, "rooms", id), {
       id, step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
       gameMode: "team", difficulty: "easy", numTeams: 2,
@@ -67,13 +69,15 @@ export function useGameState() {
       teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
       currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
     });
+
+    localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
+    setRoomId(id); setStep(3);
   };
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
     if (id === "עומר") {
       const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-      localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
       await setDoc(doc(db, "rooms", "עומר"), { 
         id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
         gameMode: "team", numTeams: 2, difficulty: "easy", 
@@ -82,14 +86,41 @@ export function useGameState() {
         teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
         preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
       });
+      localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
       setRoomId("עומר"); setStep(3); return;
     }
+
     const snap = await getDoc(doc(db, "rooms", id));
     if (snap.exists()) { 
       const data = snap.data();
-      setRoomId(id); setStep(data.step); localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
-      if (data.step === 3) await updateDoc(doc(db, "rooms", id), { players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }) }); 
-    } else alert("חדר לא נמצא");
+      
+      // התיקון: מבצעים את העדכון מול השרת *לפני* שמעדכנים את ה-State המקומי!
+      // החלפנו את arrayUnion בעדכון ישיר של המערך כדי למנוע כשלי Firebase שקטים
+      if (data.step === 3) {
+        const currentPlayers = data.players || [];
+        const isExisting = currentPlayers.find((p: any) => p.id === userId);
+        let updatedPlayers;
+        
+        if (isExisting) {
+           updatedPlayers = currentPlayers.map((p: any) => p.id === userId ? { ...p, name: payload.name, customWords: payload.customWords } : p);
+        } else {
+           updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
+        }
+        
+        await updateDoc(doc(db, "rooms", id), { 
+          players: updatedPlayers,
+          lastActivity: Date.now() 
+        });
+      }
+      
+      // רק אחרי שהשרת אישר שהשחקן בפנים, פותחים לו את המסך
+      localStorage.setItem("alias_roomId", id); 
+      localStorage.setItem("alias_userName", payload.name);
+      setRoomId(id); 
+      setStep(data.step); 
+    } else {
+      alert("חדר לא נמצא");
+    }
   };
 
   return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };
