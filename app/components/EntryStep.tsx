@@ -10,7 +10,7 @@ const localStyles: { [key: string]: CSSProperties } = {
   },
   topSection: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' },
   entryLogo: { width: '80%', height: 'auto', maxHeight: '30vh', objectFit: 'contain', borderRadius: '25px' },
-  entryTitle: { color: '#00f2ff', fontSize: 'clamp(1.2rem, 5vw, 1.8rem)', fontWeight: '900', textAlign: 'center' },
+  // הסרנו את הגדרת ה-entryTitle מהסטייל
   formSection: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { color: '#00f2ff', fontSize: '0.9rem', fontWeight: 'bold', paddingRight: '5px' },
@@ -59,13 +59,13 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
   const [customWords, setCustomWords] = useState<any[]>([]);
   
   const [newHeb, setNewHeb] = useState("");
-  const [newEn, setNewEn] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
 
   const handleAddWord = () => {
-    if (!newHeb.trim() || !newEn.trim()) return;
-    setCustomWords([...customWords, { word: newHeb.trim(), en: newEn.trim(), category: newCat }]);
-    setNewHeb(""); setNewEn("");
+    if (!newHeb.trim()) return;
+    // שומרים על מבנה האובייקט עם en ריק כדי לא לשבור תצוגה במסכים אחרים
+    setCustomWords([...customWords, { word: newHeb.trim(), en: "", category: newCat }]);
+    setNewHeb("");
   };
 
   const startAction = (type: 'create' | 'join') => {
@@ -81,7 +81,7 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
         <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
-        <h1 style={localStyles.entryTitle}>SAME-SAME</h1>
+        {/* הכותרת SAME-SAME הוסרה מכאן */}
       </div>
 
       <div style={localStyles.formSection}>
@@ -102,14 +102,10 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
             value={newHeb} onChange={e => setNewHeb(e.target.value)} 
             style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
           />
-          <input 
-            placeholder="Name in English" 
-            value={newEn} onChange={e => setNewEn(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', textAlign: 'left'}} 
-          />
+          {/* שורת הקלט באנגלית הוסרה מכאן */}
           <select 
             value={newCat} onChange={e => setNewCat(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}}
+            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}
           >
             {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
