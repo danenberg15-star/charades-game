@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, increment } from "firebase/firestore";
+import { doc, setDoc, onSnapshot, updateDoc, getDoc, deleteDoc, increment, runTransaction } from "firebase/firestore";
 import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
 
 export function useGameState() {
@@ -21,7 +21,6 @@ export function useGameState() {
 
   useEffect(() => {
     if (!roomId) return;
-    // הסרנו את step מרשימת התלויות למטה כדי למנוע ניתוקים של ה-Listener
     const unsub = onSnapshot(doc(db, "rooms", roomId), async (snap) => {
       if (snap.exists()) {
         const d = snap.data();
@@ -31,7 +30,6 @@ export function useGameState() {
             handleFullReset(); return;
         }
         setRoomData(d);
-        // שימוש ב-Callback כדי לעדכן רק אם יש שינוי, מבלי להסתמך על step החיצוני
         setStep((prevStep) => d.step !== prevStep ? d.step : prevStep);
       } else if (roomId) {
           handleFullReset();
@@ -58,7 +56,6 @@ export function useGameState() {
 
   const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
     const id = generateRoomCode();
-    // יצירת החדר ב-DB לפני המעבר אליו
     await setDoc(doc(db, "rooms", id), {
       id, step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
       gameMode: "team", difficulty: "easy", numTeams: 2,
@@ -90,36 +87,52 @@ export function useGameState() {
       setRoomId("עומר"); setStep(3); return;
     }
 
-    const snap = await getDoc(doc(db, "rooms", id));
-    if (snap.exists()) { 
-      const data = snap.data();
+    try {
+      let targetStep = 0;
       
-      // התיקון: מבצעים את העדכון מול השרת *לפני* שמעדכנים את ה-State המקומי!
-      // החלפנו את arrayUnion בעדכון ישיר של המערך כדי למנוע כשלי Firebase שקטים
-      if (data.step === 3) {
-        const currentPlayers = data.players || [];
-        const isExisting = currentPlayers.find((p: any) => p.id === userId);
-        let updatedPlayers;
+      // שימוש בטרנזקציה למניעת דריסת נתונים אם מספר שחקנים מצטרפים במקביל או ה-Host מעדכן משהו
+      await runTransaction(db, async (transaction) => {
+        const roomRef = doc(db, "rooms", id);
+        const snap = await transaction.get(roomRef);
         
-        if (isExisting) {
-           updatedPlayers = currentPlayers.map((p: any) => p.id === userId ? { ...p, name: payload.name, customWords: payload.customWords } : p);
-        } else {
-           updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
+        if (!snap.exists()) {
+          throw new Error("ROOM_NOT_FOUND");
         }
         
-        await updateDoc(doc(db, "rooms", id), { 
-          players: updatedPlayers,
-          lastActivity: Date.now() 
-        });
-      }
-      
-      // רק אחרי שהשרת אישר שהשחקן בפנים, פותחים לו את המסך
+        const data = snap.data();
+        targetStep = data.step;
+
+        if (data.step === 3) {
+          const currentPlayers = data.players || [];
+          const isExisting = currentPlayers.find((p: any) => p.id === userId);
+          let updatedPlayers;
+
+          if (isExisting) {
+            updatedPlayers = currentPlayers.map((p: any) => p.id === userId ? { ...p, name: payload.name, customWords: payload.customWords } : p);
+          } else {
+            updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
+          }
+
+          transaction.update(roomRef, {
+            players: updatedPlayers,
+            lastActivity: Date.now() 
+          });
+        }
+      });
+
+      // רק אחרי שהטרנזקציה עברה בהצלחה, פותחים לשחקן את המסך
       localStorage.setItem("alias_roomId", id); 
       localStorage.setItem("alias_userName", payload.name);
       setRoomId(id); 
-      setStep(data.step); 
-    } else {
-      alert("חדר לא נמצא");
+      setStep(targetStep); 
+      
+    } catch (error: any) {
+      if (error.message === "ROOM_NOT_FOUND") {
+        alert("חדר לא נמצא");
+      } else {
+        console.error("Join transaction failed: ", error);
+        alert("שגיאה בהצטרפות לחדר, נסה שוב");
+      }
     }
   };
 
