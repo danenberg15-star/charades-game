@@ -1,137 +1,99 @@
 "use client";
 
-import React, { useState, CSSProperties } from "react";
+import React, { useState, useEffect, CSSProperties } from "react";
 
 const localStyles: { [key: string]: CSSProperties } = {
-  flexLayout: { 
-    flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', 
-    width: '100%', height: '100dvh', justifyContent: 'space-between', 
-    direction: 'rtl', boxSizing: 'border-box', padding: '20px', overflowY: 'auto'
-  },
-  topSection: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' },
-  entryLogo: { width: '80%', height: 'auto', maxHeight: '30vh', objectFit: 'contain', borderRadius: '25px' },
-  // הסרנו את הגדרת ה-entryTitle מהסטייל
-  formSection: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' },
-  inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-  label: { color: '#00f2ff', fontSize: '0.9rem', fontWeight: 'bold', paddingRight: '5px' },
-  entryInput: { 
-    width: '100%', height: '3.5em', padding: '0 15px', borderRadius: '15px', 
-    backgroundColor: 'rgba(255,255,255,0.08)', color: 'white', 
-    border: '1px solid rgba(0, 242, 255, 0.3)', fontSize: '1.1rem', textAlign: 'right', boxSizing: 'border-box'
-  },
-  customBox: { 
-    backgroundColor: 'rgba(0, 242, 255, 0.03)', borderRadius: '20px', padding: '15px', 
-    border: '1px dashed rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '10px' 
-  },
-  addBtn: { 
-    backgroundColor: '#00f2ff', color: '#05081c', border: 'none', borderRadius: '10px', 
-    padding: '10px', fontWeight: '900', cursor: 'pointer', transition: 'transform 0.1s' 
-  },
-  wordList: { display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px', maxHeight: '80px', overflowY: 'auto' },
-  wordTag: { 
-    backgroundColor: 'rgba(0, 242, 255, 0.15)', color: '#00f2ff', padding: '4px 10px', 
-    borderRadius: '12px', fontSize: '0.8rem', border: '1px solid rgba(0, 242, 255, 0.2)' 
-  },
-  actionButtons: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '12px', paddingBottom: '20px' },
-  primaryButton: { 
-    width: '100%', height: '3.8em', borderRadius: '18px', backgroundColor: '#00f2ff', 
-    color: '#05081c', fontWeight: '900', border: 'none', fontSize: '1.3rem', cursor: 'pointer',
-    boxShadow: '0 4px 15px rgba(0, 242, 255, 0.3)'
-  },
-  secondaryButton: { 
-    width: '100%', height: '3.2em', borderRadius: '16px', backgroundColor: 'transparent', 
-    color: 'rgba(0, 242, 255, 0.9)', fontWeight: 'bold', border: '1px solid rgba(0, 242, 255, 0.4)', 
-    fontSize: '1.1rem', cursor: 'pointer' 
-  }
+  flexLayout: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', height: '100dvh', justifyContent: 'space-between', direction: 'rtl', boxSizing: 'border-box', padding: '15px' },
+  topSection: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', width: '100%' },
+  entryLogo: { width: '85%', height: 'auto', maxHeight: '22vh', objectFit: 'contain' },
+  entryTitle: { color: '#ffd700', fontSize: 'clamp(1.1rem, 4.5vw, 1.6rem)', fontWeight: '900', textAlign: 'center', lineHeight: '1.2', width: '100%' },
+  formSection: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '15px', flex: 1, justifyContent: 'center' },
+  inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px', width: '100%' },
+  label: { color: '#ffd700', fontSize: '0.85rem', fontWeight: 'bold', paddingRight: '5px' },
+  entryInput: { width: '100%', height: '3em', padding: '0 12px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.08)', color: 'white', border: '1px solid rgba(255,255,255,0.15)', fontSize: '1.1rem', textAlign: 'center', boxSizing: 'border-box' },
+  ageGrid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', width: '100%' },
+  ageButton: { padding: '10px', borderRadius: '12px', border: '1px solid #ffd700', backgroundColor: 'transparent', color: '#ffd700', fontWeight: 'bold', fontSize: '0.9rem', cursor: 'pointer' },
+  ageButtonActive: { backgroundColor: '#ffd700', color: '#05081c' },
+  joinContainer: { width: '100%', backgroundColor: 'rgba(255, 215, 0, 0.05)', borderRadius: '20px', padding: '12px', border: '1px solid rgba(255, 215, 0, 0.2)', display: 'flex', flexDirection: 'column', gap: '10px' },
+  primaryButton: { width: '100%', height: '3.5em', borderRadius: '16px', backgroundColor: '#ffd700', color: '#05081c', fontWeight: '900', border: 'none', fontSize: '1.3rem', cursor: 'pointer', boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)' },
+  secondaryButton: { width: '100%', height: '3em', borderRadius: '14px', backgroundColor: 'transparent', color: 'rgba(255, 215, 0, 0.7)', fontWeight: 'bold', border: '1px solid rgba(255, 215, 0, 0.3)', fontSize: '1rem', cursor: 'pointer' }
 };
 
-const CATEGORIES = [
-  "זמר/ת", "שחקן/ית", "במאי/ת", "דמות קולנועית", "דמות טלוויזיונית", "ראש מדינה", 
-  "פוליטיקאי/ת", "מדען והוגה דעות", "אמן/צייר", "מלחין/ה", "דמות מקראית", 
-  "מנהיג דתי", "כדורגלן", "כדורסלן", "טניסאי/ת", "ספורטאי אולימפי", "נהג מרוצים", 
-  "דוגמן/ית", "שף/קולינריה", "גיבור על", "דמות מצוירת", "כוכב ילדים", 
-  "מגיש/עיתונאי", "כוכב ריאליטי", "OTHER (אחר)"
-];
+interface EntryStepProps {
+  onJoin: (code: string) => void;
+  onCreate: () => void;
+  onSetName: (name: string) => void;
+  onSetAge: (age: string) => void;
+}
 
-export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
+export default function EntryStep({ onJoin, onCreate, onSetName, onSetAge }: EntryStepProps) {
   const [name, setName] = useState("");
+  const [age, setAge] = useState("");
   const [inputCode, setInputCode] = useState("");
-  const [customWords, setCustomWords] = useState<any[]>([]);
-  
-  const [newHeb, setNewHeb] = useState("");
-  const [newCat, setNewCat] = useState(CATEGORIES[0]);
+  const [hasUrlCode, setHasUrlCode] = useState(false);
 
-  const handleAddWord = () => {
-    if (!newHeb.trim()) return;
-    // שומרים על מבנה האובייקט עם en ריק כדי לא לשבור תצוגה במסכים אחרים
-    setCustomWords([...customWords, { word: newHeb.trim(), en: "", category: newCat }]);
-    setNewHeb("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const roomFromUrl = params.get('room');
+      if (roomFromUrl) {
+        setInputCode(roomFromUrl.trim().toUpperCase());
+        setHasUrlCode(true);
+      }
+    }
+  }, []);
+
+  const handleAgeSelect = (val: string) => {
+    setAge(val);
+    onSetAge(val);
   };
 
-  const startAction = (type: 'create' | 'join') => {
-    if (!name.trim()) return alert("נא להזין שם שחקן");
-    if (type === 'join' && !inputCode.trim()) return alert("נא להזין קוד חדר");
-    
-    const payload = { name: name.trim(), customWords };
-    if (type === 'create') onCreate(payload);
-    else onJoin(inputCode.trim(), payload);
+  const validate = (action: 'create' | 'join') => {
+    if (!name.trim()) { alert("אנא הכנס שם שחקן 🙂"); return; }
+    if (!age) { alert("אנא בחר קבוצת גיל 🙂"); return; }
+    if (action === 'join') {
+      if (!inputCode.trim()) { alert("אנא הכנס קוד חדר כדי להצטרף"); return; }
+      onJoin(inputCode.trim().toUpperCase());
+    } else onCreate();
   };
+
+  const ageCategories = [{ label: "מתחת ל-7", value: "6" }, { label: "7 עד 12", value: "12" }, { label: "13 עד 20", value: "20" }, { label: "מעל 21", value: "21" }];
 
   return (
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
-        <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
-        {/* הכותרת SAME-SAME הוסרה מכאן */}
+        <img src="/logo.webp" alt="Logo" style={localStyles.entryLogo} />
+        <h1 style={localStyles.entryTitle}>נראה אתכם תופסים את המילה הנרדפת</h1>
       </div>
 
       <div style={localStyles.formSection}>
+        <input 
+          type="text" value={name} 
+          onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} 
+          placeholder="הכנס שם שחקן" style={localStyles.entryInput} 
+        />
+        
         <div style={localStyles.inputGroup}>
-          <label style={localStyles.label}>השם שלך:</label>
-          <input 
-            type="text" value={name} 
-            onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} 
-            placeholder="איך יקראו לך במשחק?" 
-            style={localStyles.entryInput} 
-          />
-        </div>
-
-        <div style={localStyles.customBox}>
-          <label style={localStyles.label}>הוספת שמות אישיים לחבילה:</label>
-          <input 
-            placeholder="שם בעברית (למשל: דודה שרה)" 
-            value={newHeb} onChange={e => setNewHeb(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
-          />
-          {/* שורת הקלט באנגלית הוסרה מכאן */}
-          <select 
-            value={newCat} onChange={e => setNewCat(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}
-          >
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button>
-          
-          <div style={localStyles.wordList}>
-            {customWords.map((w, i) => (
-              <span key={i} style={localStyles.wordTag}>{w.word}</span>
+          <label style={localStyles.label}>באיזו קבוצת גיל אתה?</label>
+          <div style={localStyles.ageGrid}>
+            {ageCategories.map((cat) => (
+              <button key={cat.value} onClick={() => handleAgeSelect(cat.value)} style={{...localStyles.ageButton, ...(age === cat.value ? localStyles.ageButtonActive : {})}}>{cat.label}</button>
             ))}
           </div>
         </div>
 
-        <div style={{...localStyles.inputGroup, marginTop: '10px'}}>
+        <div style={localStyles.joinContainer}>
           <input 
             type="text" value={inputCode} 
             onChange={(e) => setInputCode(e.target.value.toUpperCase())} 
-            placeholder="יש לך קוד חדר?" 
-            style={{...localStyles.entryInput, borderStyle: 'dashed'}} 
+            placeholder="קוד חדר (למשל: עומר)" style={{ ...localStyles.entryInput, backgroundColor: 'rgba(0,0,0,0.2)' }} 
           />
-          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button>
+          <button onClick={() => validate('join')} style={localStyles.primaryButton}>הצטרפות למשחק</button>
+          {hasUrlCode && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '-5px' }}>כניסה אוטומטית לחדר: {inputCode}</p>}
         </div>
       </div>
 
-      <div style={localStyles.actionButtons}>
-        <button onClick={() => startAction('create')} style={localStyles.secondaryButton}>+ פתיחת חדר חדש</button>
-      </div>
+      <button onClick={() => validate('create')} style={{...localStyles.secondaryButton, width: '100%', maxWidth: '400px'}}>+ פתיחת חדר חדש</button>
     </div>
   );
 }
