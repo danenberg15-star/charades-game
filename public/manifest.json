@@ -1,7 +1,7 @@
 {
-  "name": "מילה נרדפת - SAME-SAME",
+  "name": " SAME-SAME - The Red Carpet Version",
   "short_name": "SAME-SAME",
-  "description": "משחק אוצר מילים משפחתי ומאתגר",
+  "description": "משחק לזיהוי מפורסמים בפנטומימה",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#05081c",

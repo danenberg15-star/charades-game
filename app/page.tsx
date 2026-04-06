@@ -26,11 +26,11 @@ export default function FamilyAliasApp() {
     const interval = setInterval(() => {
       if (step === 4) {
         if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); 
+        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); // QA Timer: 5s
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
         else {
-          // כשנגמר הזמן בסבבים, לא מקדמים אינדקס כדי לא לאבד מילים. המילה נשארת לתור הבא.
+          // בסיום זמן: עוברים למסך תוצאות מבלי לקדם אינדקס (המילה חוזרת בתור הבא)
           updateRoom({ step: 6, phaseEnded: null });
         }
       }
@@ -48,24 +48,23 @@ export default function FamilyAliasApp() {
 
     if (targetName === "SKIP") {
       if (roomData.currentPhase === 'A') {
-        // שלב א': מילה נמחקת מהמשחק [cite: 10, 36]
+        // שלב א': מילה שדלגו עליה נמחקת מהמשחק [cite: 10, 36]
         updateRoom({ poolIndex: increment(1) });
       } else {
-        // שלב ב/ג: מילה עוברת לסוף החפיסה וקנס של 2- [cite: 17, 43, 47]
+        // שלב ב/ג: מילה חוזרת לסוף החפיסה וקנס 2- [cite: 17, 43, 47]
         pool.splice(roomData.poolIndex, 1);
         pool.push(currentWord);
         updateRoom({ 
           [`totalScores.${describerTeam}`]: increment(-2), 
           roundScore: increment(-2), 
           shuffledPools: pool 
-          // poolIndex נשאר אותו דבר כי המילה הבאה נכנסה למיקום הנוכחי
         });
       }
       return;
     }
 
     if (roomData.currentPhase === 'A') {
-      // שלב א': +1 למתאר ו-+1 למנחש [cite: 8, 35]
+      // שלב א': נקודה למנחש ונקודה למתאר 
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
       
@@ -77,23 +76,43 @@ export default function FamilyAliasApp() {
         gameDeck: updatedDeck
       };
 
+      // מעבר ל-B רק כשמגיעים למכסה (N*5) 
       if (updatedDeck.length >= nPlayers * 5) {
-        Object.assign(updates, { poolIndex: 0, shuffledPools: shuffleArray(updatedDeck), currentPhase: 'B', step: 6, phaseEnded: 'א' });
+        Object.assign(updates, { 
+          poolIndex: 0, 
+          shuffledPools: shuffleArray(updatedDeck), 
+          currentPhase: 'B', 
+          step: 6, 
+          phaseEnded: 'א' 
+        });
       }
       updateRoom(updates);
     } else {
-      // שלב ב/ג: +1 לקבוצה המנחשת [cite: 16, 40, 42]
+      // שלב ב/ג: נקודה לקבוצה [cite: 16, 40, 42]
       const updates: any = {
         [`totalScores.${targetName}`]: increment(points),
         roundScore: increment(points),
         poolIndex: increment(1)
       };
 
+      // בדיקה אם עברנו על כל החפיסה
       if ((roomData.poolIndex + 1) >= pool.length) {
-        const nextPhase = roomData.currentPhase === 'B' ? 'C' : 'FINISH';
-        if (nextPhase === 'FINISH') updateRoom({ ...updates, step: 7 });
-        else updateRoom({ ...updates, currentPhase: nextPhase, poolIndex: 0, step: 6, phaseEnded: roomData.currentPhase });
-      } else updateRoom(updates);
+        if (roomData.currentPhase === 'B') {
+          // מעבר לסבב ג' עם ערבוב מחדש של המילים
+          updateRoom({ 
+            ...updates, 
+            currentPhase: 'C', 
+            shuffledPools: shuffleArray(pool), 
+            poolIndex: 0, 
+            step: 6, 
+            phaseEnded: 'ב' 
+          });
+        } else {
+          updateRoom({ ...updates, step: 7 });
+        }
+      } else {
+        updateRoom(updates);
+      }
     }
   };
 

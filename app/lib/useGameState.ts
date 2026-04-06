@@ -63,7 +63,6 @@ export function useGameState() {
     if (id === "עומר") {
       const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
       localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
-      
       await setDoc(doc(db, "rooms", "עומר"), { 
         id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
         gameMode: "team", numTeams: 2, difficulty: "easy", 
