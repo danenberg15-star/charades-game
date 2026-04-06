@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react"; // נוסף useState
+import { useEffect, useState } from "react";
 import { useGameState } from "./lib/useGameState";
 import { getInitialShuffledPools, shuffleArray } from "./lib/game-utils";
 import RulesStep from "./components/RulesStep"; 
@@ -15,7 +15,6 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
-  // חילוץ קוד חדר מה-URL (למשל: ?room=עומר)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -125,7 +124,6 @@ export default function FamilyAliasApp() {
   return (
     <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
-      {/* הזרקת קוד החדר המוכן לתוך EntryStep */}
       {step === 1 && <EntryStep initialCode={urlRoomId} onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
       {roomData && (
         <>
