@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
-import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore";
-import { generateRoomCode, getInitialShuffledPools } from "./game-utils";
+import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc } from "firebase/firestore";
+import { generateRoomCode } from "./game-utils";
 
 export function useGameState() {
   const [mounted, setMounted] = useState(false);
@@ -10,13 +10,20 @@ export function useGameState() {
   const [roomData, setRoomData] = useState<any>(null);
   const [step, setStep] = useState(0); 
   const [userName, setUserName] = useState("");
+  const [userAge, setUserAge] = useState("");
 
   useEffect(() => {
     setMounted(true);
     const id = localStorage.getItem("alias_userId") || "u_" + Math.random().toString(36).substring(2, 9);
     setUserId(id); localStorage.setItem("alias_userId", id);
     const n = localStorage.getItem("alias_userName");
-    if (n) { setUserName(n); const r = localStorage.getItem("alias_roomId"); if (r) setRoomId(r); else setStep(1); }
+    const a = localStorage.getItem("alias_userAge");
+    if (n && a) { 
+      setUserName(n); 
+      setUserAge(a); 
+      const r = localStorage.getItem("alias_roomId"); 
+      if (r) setRoomId(r); else setStep(2); 
+    }
   }, []);
 
   useEffect(() => {
@@ -24,38 +31,15 @@ export function useGameState() {
     return onSnapshot(doc(db, "rooms", roomId), async (snap) => {
       if (snap.exists()) {
         const d = snap.data();
-        const isOmerRoom = roomId === "עומר";
-        
-        // הגדרת זמני אי-פעילות: דקה אחת לחדר עומר, 15 דקות לחדרים רגילים
-        const OMER_RESET_LIMIT = 60 * 1000; 
-        const REGULAR_LIMIT = 15 * 60 * 1000;
+        const INACTIVITY_LIMIT = 5 * 60 * 1000; 
 
-        if (d.lastActivity) {
-            const diff = Date.now() - d.lastActivity;
-            
-            // לוגיקת איפוס מיוחדת לחדר עומר: אם עברה דקה והמשחק לא ב-Setup, נאפס ל-Setup
-            if (isOmerRoom && diff > OMER_RESET_LIMIT && d.step !== 3) {
-                // רק ה-Host (השחקן הראשון) מבצע את העדכון ב-DB כדי למנוע כפילויות
-                if (d.players?.[0]?.id === userId) {
-                    await updateDoc(doc(db, "rooms", "עומר"), {
-                        step: 3,
-                        totalScores: {},
-                        roundScore: 0,
-                        currentPhase: 'A',
-                        poolIndex: 0,
-                        isPaused: false,
-                        gameDeck: [],
-                        lastActivity: Date.now() // מאפס את הטיימר כדי שלא יתבצע איפוס בלולאה
-                    });
-                }
-            } else if (!isOmerRoom && diff > REGULAR_LIMIT) {
-                // לוגיקה רגילה לחדרים אחרים: מחיקה ויציאה
-                if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
-                handleFullReset(); 
-                return;
+        if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
+            if (roomId !== "עומר") {
+              if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
+              handleFullReset(); 
+              return;
             }
         }
-        
         setRoomData(d);
         if (d.step !== step) setStep(d.step);
       } else if (roomId && roomId !== "עומר") {
@@ -70,53 +54,42 @@ export function useGameState() {
 
   const handleFullReset = () => { localStorage.clear(); window.location.href = '/'; };
 
-  const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
+  const handleCreateRoom = async (nameOverride?: string, ageOverride?: string) => {
+    const finalName = nameOverride || userName;
+    const finalAge = ageOverride || userAge;
     const id = generateRoomCode();
     setRoomId(id); setStep(3);
-    localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
+    localStorage.setItem("alias_roomId", id);
+    localStorage.setItem("alias_userName", finalName);
+    localStorage.setItem("alias_userAge", finalAge);
 
     await setDoc(doc(db, "rooms", id), {
       id, step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-      gameMode: "team", difficulty: "easy", numTeams: 2,
-      players: [{ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }],
+      gameMode: "individual", difficulty: "age-appropriate", numTeams: 2,
+      players: [{ id: userId, name: finalName, age: finalAge, teamIdx: 0 }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, timeLeft: 5, 
-      isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
-      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
-      currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
+      totalScores: {}, roundScore: 0, timeLeft: 60, isPaused: false, currentTurnIdx: 0,
+      currentPhase: 'A', poolIndex: 0, preGameTimer: 3
     });
   };
 
-  const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
+  const handleJoinRoom = async (idInput: string, nameOverride?: string, ageOverride?: string) => {
     const id = idInput.toUpperCase();
+    const finalName = nameOverride || userName;
+    const finalAge = ageOverride || userAge;
     localStorage.setItem("alias_roomId", id); 
-    localStorage.setItem("alias_userName", payload.name);
+    localStorage.setItem("alias_userName", finalName);
 
     if (id === "עומר") {
-      const snapOmer = await getDoc(doc(db, "rooms", "עומר"));
-      if (snapOmer.exists()) {
-        await updateDoc(doc(db, "rooms", "עומר"), { 
-          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
-          lastActivity: Date.now(),
-          // בהצטרפות לחדר עומר, תמיד נחזיר ל-Setup כדי לאפשר QA מהתחלה
-          step: 3,
-          totalScores: {},
-          roundScore: 0,
-          currentPhase: 'A',
-          poolIndex: 0,
-          gameDeck: []
-        });
-      } else {
-        const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-        await setDoc(doc(db, "rooms", "עומר"), { 
-          id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-          gameMode: "team", numTeams: 2, difficulty: "easy", 
-          players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-          timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
-          teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-          preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
-        });
-      }
+      // מכניקה של SAME-SAME: setDoc מלא שמאפס הכל ל-Setup
+      const qp = [{ id: userId, name: finalName || "עומר", age: finalAge || "21", teamIdx: 0 }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, age: "21", teamIdx: 1 }))];
+      await setDoc(doc(db, "rooms", "עומר"), { 
+        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+        gameMode: "team", numTeams: 2, difficulty: "age-appropriate",
+        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+        timeLeft: 60, isPaused: false, currentTurnIdx: 0, 
+        currentPhase: 'A', poolIndex: 0, preGameTimer: 3
+      });
       setRoomId("עומר"); setStep(3); return;
     }
 
@@ -124,12 +97,14 @@ export function useGameState() {
     if (snap.exists()) { 
       const data = snap.data();
       setRoomId(id); setStep(data.step); 
-      await updateDoc(doc(db, "rooms", id), { 
-          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
+      if (data.step === 3) {
+        await updateDoc(doc(db, "rooms", id), { 
+          players: arrayUnion({ id: userId, name: finalName, age: finalAge, teamIdx: 0 }),
           lastActivity: Date.now()
-      }); 
+        }); 
+      }
     } else alert("חדר לא נמצא");
   };
 
-  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };
+  return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, userAge, setUserAge, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom };
 }

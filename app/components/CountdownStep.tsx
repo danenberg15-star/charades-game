@@ -7,44 +7,24 @@ interface CountdownStepProps {
   timer: number;
   turnInfo: { name: string; team: string };
   isTeamMode: boolean;
-  currentPhase: 'A' | 'B' | 'C';
 }
 
-export default function CountdownStep({ timer, turnInfo, isTeamMode, currentPhase }: CountdownStepProps) {
-  const getPhaseRule = () => {
-    switch(currentPhase) {
-      case 'A': return "שלב א: ניתן להיעזר בפנטומימה ומילים";
-      case 'B': return "שלב ב: רק מילה אחת";
-      case 'C': return "שלב ג: רק פנטומימה";
-      default: return "";
-    }
-  };
-
+export default function CountdownStep({ timer, turnInfo, isTeamMode }: CountdownStepProps) {
   return (
-    <div style={{...styles.flexLayout, height: '100dvh', justifyContent: 'center', direction: 'rtl'}}>
-      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+    <div style={styles.flexLayout}>
+      <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <div style={{ fontSize: '24px', color: '#64748b', marginBottom: '10px' }}>מתחילים בעוד...</div>
-        <div style={{ fontSize: '110px', fontWeight: '900', color: '#00f2ff', lineHeight: '1' }}>{timer}</div>
-      </div>
-
-      <div style={{ 
-        backgroundColor: 'rgba(0, 242, 255, 0.1)', 
-        padding: '15px 25px', 
-        borderRadius: '20px', 
-        border: '1px solid #00f2ff', 
-        marginBottom: '40px', 
-        textAlign: 'center', 
-        width: '90%', 
-        maxWidth: '350px' 
-      }}>
-        <div style={{ color: '#00f2ff', fontSize: '1.2rem', fontWeight: 'bold' }}>{getPhaseRule()}</div>
+        <div style={{ fontSize: '120px', fontWeight: '900', color: '#ffd700', lineHeight: '1' }}>{timer}</div>
       </div>
 
       <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '24px', width: '320px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div style={{ fontSize: '18px', color: '#64748b', marginBottom: '8px' }}>תור השחקן:</div>
         <div style={{ fontSize: '28px', fontWeight: 'bold', color: '#fff' }}>{turnInfo.name}</div>
         {isTeamMode && (
-          <div style={{ fontSize: '20px', color: '#00f2ff', marginTop: '5px' }}>{turnInfo.team}</div>
+          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>עבור הקבוצה:</div>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#ffd700' }}>{turnInfo.team}</div>
+          </div>
         )}
       </div>
     </div>
