@@ -24,14 +24,25 @@ export function useGameState() {
     return onSnapshot(doc(db, "rooms", roomId), async (snap) => {
       if (snap.exists()) {
         const d = snap.data();
-        const INACTIVITY_LIMIT = 5 * 60 * 1000; 
+        
+        // תיקון: הגדרת מגבלת זמן ארוכה מאוד (24 שעות) לחדר QA "עומר" כדי למנוע ריסוט
+        const isOmerRoom = roomId === "עומר";
+        const INACTIVITY_LIMIT = isOmerRoom ? 24 * 60 * 60 * 1000 : 15 * 60 * 1000; 
+
         if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
-            if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
-            handleFullReset(); return;
+            // החרגה: לא מוחקים את חדר עומר ולא מבצעים ריסוט אם זה חדר עומר
+            if (!isOmerRoom) {
+              if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
+              handleFullReset(); 
+              return;
+            }
         }
         setRoomData(d);
         if (d.step !== step) setStep(d.step);
-      } else if (roomId) handleFullReset();
+      } else if (roomId && roomId !== "עומר") {
+          // אם החדר נמחק ידנית מה-DB, נבצע ריסוט (חוץ מחדר עומר)
+          handleFullReset();
+      }
     });
   }, [roomId, step, userId]);
 
@@ -60,19 +71,18 @@ export function useGameState() {
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
-    
-    // לוגיקה מעודכנת לחדר עומר: הצטרפות במקום דריסה
+    localStorage.setItem("alias_roomId", id); 
+    localStorage.setItem("alias_userName", payload.name);
+
     if (id === "עומר") {
       const snap = await getDoc(doc(db, "rooms", "עומר"));
-      localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
-      
       if (snap.exists()) {
-        // אם החדר כבר קיים, רק נוסיף את השחקן החדש למערך
+        // תיקון: עדכון lastActivity בעת הצטרפות כדי למנוע את הריסוט המיידי
         await updateDoc(doc(db, "rooms", "עומר"), { 
-          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }) 
+          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
+          lastActivity: Date.now()
         });
       } else {
-        // אם החדר לא קיים, ניצור אותו פעם אחת עם בוטים
         const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
         await setDoc(doc(db, "rooms", "עומר"), { 
           id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
@@ -89,8 +99,11 @@ export function useGameState() {
     const snap = await getDoc(doc(db, "rooms", id));
     if (snap.exists()) { 
       const data = snap.data();
-      setRoomId(id); setStep(data.step); localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
-      if (data.step === 3) await updateDoc(doc(db, "rooms", id), { players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }) }); 
+      setRoomId(id); setStep(data.step); 
+      await updateDoc(doc(db, "rooms", id), { 
+          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
+          lastActivity: Date.now()
+      }); 
     } else alert("חדר לא נמצא");
   };
 
