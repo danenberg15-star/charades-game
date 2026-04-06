@@ -1,8 +1,7 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 export default function GameStep({ roomData, userId, targets, updateRoom, handleAction, onExit }: any) {
-  const [isPaused, setIsPaused] = useState(false);
   const currentP = roomData.players[roomData.currentTurnIdx];
   const isIDescriber = currentP.id === userId;
   const me = roomData.players.find((p: any) => p.id === userId);
@@ -33,18 +32,6 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
     }
   }, [roomData.currentPhase]);
 
-  if (isPaused) {
-    return (
-      <div style={{...s.layout, justifyContent: 'center', alignItems: 'center'}}>
-        <div style={s.pauseBox}>
-          <h2 style={{color: 'white', textAlign: 'center', fontSize: '2rem', marginBottom: '30px'}}>המשחק בהפסקה</h2>
-          <button onClick={() => setIsPaused(false)} style={s.resume}>המשך לשחק</button>
-          <button onClick={onExit} style={{...s.resume, backgroundColor: 'transparent', border: '2px solid #ef4444', color: '#ef4444', marginTop: '15px'}}>צא מהחדר</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div style={s.layout}>
       <div style={s.header}>
@@ -52,7 +39,8 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
         <div style={{...s.timer, color: roomData.timeLeft <= 10 ? '#ef4444' : '#00f2ff'}}>
           {roomData.timeLeft}s
         </div>
-        <button onClick={() => setIsPaused(true)} style={s.icon}>⏸</button>
+        {/* עדכון: הפסקה גלובלית דרך Firebase */}
+        <button onClick={() => updateRoom({ isPaused: true })} style={s.icon}>⏸</button>
       </div>
 
       <div style={s.phaseHeader}>
@@ -121,7 +109,5 @@ const s: any = {
   enL: { fontSize: '1.5rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff' },
   catLabel: { marginTop: '10px', fontSize: '0.8rem', backgroundColor: 'rgba(0, 242, 255, 0.2)', padding: '4px 12px', borderRadius: '15px', color: '#00f2ff' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '10px' },
-  target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none' },
-  pauseBox: { width: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '40px 20px', border: '1px solid rgba(0, 242, 255, 0.2)' },
-  resume: { height: '60px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '15px', fontWeight: '900', border: 'none', width: '100%', fontSize: '1.2rem' }
+  target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none' }
 };
