@@ -11,10 +11,30 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// מילון תרגום קטגוריות למקרה שהן באנגלית בקובץ המקור
+// מילון תרגום קטגוריות שתואם בדיוק למפתחות בקובץ celebs.ts
 const CATEGORY_MAP: Record<string, string> = {
-  'Actor': 'שחקן/ית',
+  'singer': 'זמר/ת',
+  'actor': 'שחקן/ית',
+  'athlete': 'ספורטאי/ת',
+  'politician': 'פוליטיקאי/ת',
+  'businessperson': 'איש/ת עסקים',
+  'model': 'דוגמן/ית',
+  'presenter': 'מנחה/ת טלוויזיה',
+  'artist': 'אמן/ית',
+  'writer': 'סופר/ת',
+  'scientist': 'מדען/ית',
+  'comedian': 'קומיקאי/ת',
+  'director': 'במאי/ת',
+  'tv_personality': 'אישיות טלוויזיונית',
+  'journalist': 'עיתונאי/ת',
+  'reality_star': 'כוכב/ת ריאליטי',
+  'cartoon_character': 'דמות מצוירת',
+  'kids_star': 'כוכב/ת ילדים',
+  'chef': 'שף/קולינריה',
+  'superhero': 'גיבור על',
+  // גיבוי למקרה של אותיות גדולות
   'Singer': 'זמר/ת',
+  'Actor': 'שחקן/ית',
   'Athlete': 'ספורטאי/ת',
   'Politician': 'פוליטיקאי/ת',
   'Businessperson': 'איש/ת עסקים',
@@ -35,10 +55,10 @@ const CATEGORY_MAP: Record<string, string> = {
  * השמות שהוזנו ידנית על ידי השחקנים (customWords) יופיעו תמיד ראשונים.
  */
 export const getInitialShuffledPools = (customWords: any[] = []) => {
-  // מוודאים שכל מפורסם מקבל קטגוריה בעברית
   const mappedCelebs = CELEBS_WORDS.map((c: any) => ({
     ...c,
-    category: CATEGORY_MAP[c.category] || c.category 
+    // מוודא התאמה גם אם יש אותיות גדולות או קטנות
+    category: CATEGORY_MAP[c.category?.toLowerCase()] || CATEGORY_MAP[c.category] || c.category 
   }));
   
   const shuffledCelebs = shuffleArray(mappedCelebs);
