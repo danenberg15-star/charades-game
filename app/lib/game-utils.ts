@@ -11,64 +11,75 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
-// מילון מקיף שמכסה את כל סוגי המפורסמים והקטגוריות האפשריות במשחק
+// מילון מקיף הכולל בדיוק את המפתחות שקיימים בקובץ celebs.ts שלך
 const CATEGORY_MAP: Record<string, string> = {
+  // קטגוריות ישירות מתוך הקובץ שלך:
   'singer': 'זמר/ת',
   'actor': 'שחקן/ית',
-  'athlete': 'ספורטאי/ת',
-  'footballer': 'כדורגלן',
-  'football player': 'כדורגלן',
-  'soccer player': 'כדורגלן',
-  'basketball player': 'כדורסלן',
-  'tennis player': 'טניסאי/ת',
-  'olympic athlete': 'ספורטאי/ת אולימפי/ת',
-  'racing driver': 'נהג/ת מרוצים',
+  'director': 'במאי/ת',
+  'movie_character': 'דמות קולנועית',
+  'tv_character': 'דמות טלוויזיונית',
+  'head_of_state': 'ראש מדינה / מנהיג',
   'politician': 'פוליטיקאי/ת',
+  'thinker': 'מדען / הוגה דעות',
+  'artist': 'אמן / צייר',
+  'composer': 'מלחין/ה',
+  'biblical': 'דמות מקראית',
+  'religious_leader': 'מנהיג דתי',
+  'footballer': 'כדורגלן/ית',
+  'basketballer': 'כדורסלן/ית',
+  'tennis_player': 'טניסאי/ת',
+  'olympic_athlete': 'ספורטאי/ת אולימפי/ת',
+  'racing_driver': 'נהג/ת מרוצים',
+  'model': 'דוגמן/ית',
+  'culinary': 'שף / קולינריה',
+  'superhero': 'גיבור/ת על',
+  'cartoon_character': 'דמות מצוירת',
+  'kids_star': 'כוכב/ת ילדים',
+  'journalist': 'עיתונאי/ת / מגיש/ה',
+  'reality_star': 'כוכב/ת ריאליטי',
+  'historical_figure': 'דמות היסטורית',
+
+  // גיבויים למקרה שיש מילים נוספות שמנוסחות קצת אחרת
+  'football player': 'כדורגלן/ית',
+  'soccer player': 'כדורגלן/ית',
+  'basketball player': 'כדורסלן/ית',
   'businessperson': 'איש/ת עסקים',
   'businessman': 'איש/ת עסקים',
   'businesswoman': 'אשת עסקים',
   'entrepreneur': 'יזם/ית',
-  'model': 'דוגמן/ית',
   'presenter': 'מנחה/ת טלוויזיה',
   'host': 'מגיש/ה',
-  'artist': 'אמן/ית',
-  'painter': 'צייר/ת',
   'writer': 'סופר/ת',
   'author': 'סופר/ת',
   'scientist': 'מדען/ית',
   'philosopher': 'הוגה דעות',
   'comedian': 'קומיקאי/ת',
-  'director': 'במאי/ת',
   'tv personality': 'אישיות טלוויזיונית',
-  'journalist': 'עיתונאי/ת',
-  'reality star': 'כוכב/ת ריאליטי',
-  'cartoon character': 'דמות מצוירת',
-  'movie character': 'דמות קולנועית',
-  'kids star': 'כוכב/ת ילדים',
-  'chef': 'שף/קולינריה',
-  'superhero': 'גיבור/ת על',
-  'historical figure': 'דמות היסטורית',
-  'band': 'להקה/הרכב',
+  'chef': 'שף / קולינריה',
+  'band': 'להקה / הרכב',
   'influencer': 'משפיען/ית רשת',
   'youtuber': 'יוטיובר/ית',
   'tiktoker': 'טיקטוקר/ית',
   'gamer': 'גיימר/ית',
   'rabbi': 'מנהיג דתי / רב',
-  'religious leader': 'מנהיג דתי',
-  'biblical figure': 'דמות מקראית',
   'royal': 'בן/בת מלוכה',
   'royalty': 'בן/בת מלוכה',
   'military leader': 'מנהיג צבאי',
   'military': 'איש צבא',
   'dancer': 'רקדן/ית',
-  'magician': 'קוסם/אמן חושים',
+  'magician': 'קוסם / אמן חושים',
+  'athlete': 'ספורטאי/ת',
   'other': 'אחר'
 };
 
-// פונקציית נרמול: מוודאת ששום דבר לא נופל בין הכיסאות
+// פונקציית תרגום חכמה שקודם בודקת התאמה מדויקת, ואז מנסה לנקות את הטקסט
 const translateCategory = (cat?: string) => {
   if (!cat) return '';
-  // מנרמל את המחרוזת: הופך הכל לאותיות קטנות ומחליף קווים תחתונים ברווחים
+  // בדיקה 1: התאמה מדויקת (המקרה הנפוץ ב-celebs.ts)
+  if (CATEGORY_MAP[cat]) return CATEGORY_MAP[cat];
+  
+  // בדיקה 2: נירמול למקרה של חוסר תאימות (אותיות קטנות/גדולות, קו תחתון)
   const normalized = cat.toLowerCase().replace(/_/g, ' ').trim();
   return CATEGORY_MAP[normalized] || cat; 
 };
@@ -80,12 +91,10 @@ const translateCategory = (cat?: string) => {
 export const getInitialShuffledPools = (customWords: any[] = []) => {
   const mappedCelebs = CELEBS_WORDS.map((c: any) => ({
     ...c,
-    // מעביר כל קטגוריה דרך פונקציית התרגום ההרמטית
     category: translateCategory(c.category)
   }));
   
   const shuffledCelebs = shuffleArray(mappedCelebs);
   
-  // איחוד: מילים מותאמות אישית בראש, ואז כל השאר
   return [...customWords, ...shuffledCelebs];
 };
