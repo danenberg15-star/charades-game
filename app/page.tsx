@@ -43,7 +43,16 @@ export default function FamilyAliasApp() {
 
       if (step === 4) {
         if (liveData.preGameTimer > 0) updateRoom({ preGameTimer: liveData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 60, roundScore: 0 }); 
+        else {
+          // הגדרת זמן הסיבוב: 5 שניות לחדר עומר, אחרת לפי השלב (30 לשלב א', 60 לאחרים)
+          let nextTimeLimit;
+          if (roomId === "עומר") {
+            nextTimeLimit = 5;
+          } else {
+            nextTimeLimit = liveData.currentPhase === 'A' ? 30 : 60;
+          }
+          updateRoom({ step: 5, timeLeft: nextTimeLimit, roundScore: 0 }); 
+        }
       } else if (step === 5) {
         if (liveData.timeLeft > 0) updateRoom({ timeLeft: liveData.timeLeft - 1 });
         else {
@@ -145,7 +154,6 @@ export default function FamilyAliasApp() {
               editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
               onStart={() => {
                 const updates: any = { step: 4, preGameTimer: 3, poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] };
-                // טעינה עצלה לחדר עומר
                 if (roomId === "עומר" && (!roomData.shuffledPools || roomData.shuffledPools.length === 0)) {
                   const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
                   updates.shuffledPools = getInitialShuffledPools(allCustom);
