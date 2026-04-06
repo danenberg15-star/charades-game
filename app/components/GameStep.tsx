@@ -90,9 +90,11 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
                 {wordData.showImage && wordData.img && (
                   <div style={s.imgBox}><img src={wordData.img} alt="" style={s.img} /></div>
                 )}
+                {/* שם הדמות מוגדל */}
                 <div style={wordData.showImage ? s.heb : s.hebL}>{wordData.word}</div>
+                {/* הקטגוריה באותו פונט שמן כמו הדמות, מודגשת בצבע תכלת */}
+                <div style={wordData.showImage ? s.hebCat : s.hebCatL}>{wordData.category}</div>
                 <div style={wordData.showImage ? s.en : s.enL}>{wordData.en}</div>
-                <div style={s.catLabel}>{wordData.category}</div>
               </>
             ) : (
               <div style={{ textAlign: 'center' }}>
@@ -119,11 +121,7 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
 }
 
 const s: any = {
-  layout: { 
-    display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh', 
-    padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', 
-    margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto', position: 'relative'
-  },
+  layout: { display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto', position: 'relative' },
   exitBtn: { position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '60px', flexShrink: 0, paddingLeft: '45px' },
   scoreBox: { backgroundColor: 'rgba(0, 242, 255, 0.15)', padding: '8px 15px', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', fontSize: '1.2rem' },
@@ -133,15 +131,16 @@ const s: any = {
   phaseTitle: { color: '#00f2ff', fontWeight: 'bold', fontSize: '1rem' },
   phaseInstruction: { color: 'white', fontSize: '0.9rem', opacity: 0.9 },
   skip: { width: '100%', minHeight: '50px', border: '2px dashed #ef4444', borderRadius: '15px', color: '#ef4444', fontWeight: 'bold', background: 'none', cursor: 'pointer', flexShrink: 0 },
-  center: { flex: 1, minHeight: '20vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  card: { width: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0, 242, 255, 0.2)' },
-  imgBox: { height: '150px', maxHeight: '15vh', marginBottom: '10px' },
+  center: { flex: 1, minHeight: '25vh', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  card: { width: '100%', minHeight: '30vh', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0, 242, 255, 0.2)' },
+  imgBox: { height: '180px', maxHeight: '20vh', marginBottom: '15px' },
   img: { height: '100%', objectFit: 'contain' },
-  heb: { fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white' }, 
-  en: { fontSize: '1.2rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff' },
-  hebL: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white' }, 
-  enL: { fontSize: '1.5rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff' },
-  catLabel: { marginTop: '10px', fontSize: '0.8rem', backgroundColor: 'rgba(0, 242, 255, 0.2)', padding: '4px 12px', borderRadius: '15px', color: '#00f2ff' },
+  heb: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
+  hebCat: { fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '5px' },
+  en: { fontSize: '1.2rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: 'white', marginTop: '10px' },
+  hebL: { fontSize: '3.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
+  hebCatL: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '10px' },
+  enL: { fontSize: '1.5rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: 'white', marginTop: '15px' },
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '15px', flexShrink: 0 },
   target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none', cursor: 'pointer' },
   pauseOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', backgroundColor: 'rgba(5, 8, 28, 0.95)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', direction: 'rtl' },
