@@ -24,18 +24,38 @@ export function useGameState() {
     return onSnapshot(doc(db, "rooms", roomId), async (snap) => {
       if (snap.exists()) {
         const d = snap.data();
-        
-        // תיקון: חדר עומר חסין ממחיקה. חדרים אחרים נמחקים אחרי 15 דקות (הגדלנו מ-5)
         const isOmerRoom = roomId === "עומר";
-        const INACTIVITY_LIMIT = isOmerRoom ? 48 * 60 * 60 * 1000 : 15 * 60 * 1000; 
+        
+        // הגדרת זמני אי-פעילות: דקה אחת לחדר עומר, 15 דקות לחדרים רגילים
+        const OMER_RESET_LIMIT = 60 * 1000; 
+        const REGULAR_LIMIT = 15 * 60 * 1000;
 
-        if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
-            if (!isOmerRoom) {
-              if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
-              handleFullReset(); 
-              return;
+        if (d.lastActivity) {
+            const diff = Date.now() - d.lastActivity;
+            
+            // לוגיקת איפוס מיוחדת לחדר עומר: אם עברה דקה והמשחק לא ב-Setup, נאפס ל-Setup
+            if (isOmerRoom && diff > OMER_RESET_LIMIT && d.step !== 3) {
+                // רק ה-Host (השחקן הראשון) מבצע את העדכון ב-DB כדי למנוע כפילויות
+                if (d.players?.[0]?.id === userId) {
+                    await updateDoc(doc(db, "rooms", "עומר"), {
+                        step: 3,
+                        totalScores: {},
+                        roundScore: 0,
+                        currentPhase: 'A',
+                        poolIndex: 0,
+                        isPaused: false,
+                        gameDeck: [],
+                        lastActivity: Date.now() // מאפס את הטיימר כדי שלא יתבצע איפוס בלולאה
+                    });
+                }
+            } else if (!isOmerRoom && diff > REGULAR_LIMIT) {
+                // לוגיקה רגילה לחדרים אחרים: מחיקה ויציאה
+                if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
+                handleFullReset(); 
+                return;
             }
         }
+        
         setRoomData(d);
         if (d.step !== step) setStep(d.step);
       } else if (roomId && roomId !== "עומר") {
@@ -75,10 +95,16 @@ export function useGameState() {
     if (id === "עומר") {
       const snapOmer = await getDoc(doc(db, "rooms", "עומר"));
       if (snapOmer.exists()) {
-        // עדכון Activity מיד עם ההצטרפות כדי למנוע את ה-Reset ב-Snapshot
         await updateDoc(doc(db, "rooms", "עומר"), { 
           players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
-          lastActivity: Date.now()
+          lastActivity: Date.now(),
+          // בהצטרפות לחדר עומר, תמיד נחזיר ל-Setup כדי לאפשר QA מהתחלה
+          step: 3,
+          totalScores: {},
+          roundScore: 0,
+          currentPhase: 'A',
+          poolIndex: 0,
+          gameDeck: []
         });
       } else {
         const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
