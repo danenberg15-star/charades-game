@@ -39,7 +39,18 @@ export function useGameState() {
     if (roomId) await updateDoc(doc(db, "rooms", roomId), { ...newData, lastActivity: Date.now() }); 
   };
 
-  const handleFullReset = () => { localStorage.clear(); window.location.href = '/'; };
+  // הפתרון שלך: בלחיצה על X או סיום, מוחקים את חדר עומר מ-Firebase כדי שה-QA הבא יהיה נקי
+  const handleFullReset = async () => { 
+    if (roomId === "עומר") {
+      try {
+        await deleteDoc(doc(db, "rooms", "עומר"));
+      } catch (e) {
+        console.error("Error clearing QA room", e);
+      }
+    }
+    localStorage.clear(); 
+    window.location.href = '/'; 
+  };
 
   const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
     const id = generateRoomCode();
