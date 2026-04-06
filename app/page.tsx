@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react"; // הוספת useState לעיבוד ה-URL
+import { useEffect, useState } from "react"; 
 import { useGameState } from "./lib/useGameState";
 import { getInitialShuffledPools, shuffleArray } from "./lib/game-utils";
 import RulesStep from "./components/RulesStep"; 
@@ -15,7 +15,7 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
-  // חילוץ קוד חדר מה-URL
+  // חילוץ קוד חדר מהכתובת
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -73,7 +73,6 @@ export default function FamilyAliasApp() {
     if (roomData.currentPhase === 'A') {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
-      
       const updates: any = {
         [`totalScores.${describerTeam}`]: increment(1),
         [`totalScores.${targetName}`]: increment(1),
@@ -125,7 +124,6 @@ export default function FamilyAliasApp() {
   return (
     <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
-      {/* הזרקת קוד החדר לתוך EntryStep */}
       {step === 1 && <EntryStep initialCode={urlRoomId} onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
       {roomData && (
         <>
@@ -170,55 +168,20 @@ export default function FamilyAliasApp() {
           {step === 8 && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
 
           {roomData.isPaused && (
-            <div style={{
-              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-              backgroundColor: 'rgba(5, 8, 28, 0.98)', zIndex: 10000,
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '20px', direction: 'rtl', backdropFilter: 'blur(10px)'
-            }}>
-              <div style={{
-                width: '100%', maxWidth: '450px', backgroundColor: '#1a1d2e',
-                borderRadius: '35px', padding: '30px', border: '2px solid rgba(0, 242, 255, 0.4)',
-                display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 0 40px rgba(0, 242, 255, 0.2)'
-              }}>
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 28, 0.98)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', direction: 'rtl', backdropFilter: 'blur(10px)' }}>
+              <div style={{ width: '100%', maxWidth: '450px', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '30px', border: '2px solid rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 0 40px rgba(0, 242, 255, 0.2)' }}>
                 <h2 style={{ color: 'white', textAlign: 'center', fontSize: '2.2rem', fontWeight: '900', margin: 0 }}>המשחק בהפסקה</h2>
-                
-                <p style={{ color: '#00f2ff', textAlign: 'center', margin: '-10px 0 10px', fontSize: '1rem', opacity: 0.8 }}>תיקון ניקוד ידני:</p>
-
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {roomData.teamNames.slice(0, roomData.numTeams).map((team: string) => (
-                    <div key={team} style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      padding: '15px 20px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px',
-                      border: '1px solid rgba(255,255,255,0.1)'
-                    }}>
-                      <button 
-                        onClick={() => updateRoom({ [`totalScores.${team}`]: increment(-1) })}
-                        style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #ef4444', color: '#ef4444', background: 'none', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer' }}
-                      >-</button>
-                      
-                      <div style={{ textAlign: 'center', flex: 1 }}>
-                        <div style={{ fontSize: '1.1rem', color: 'white', fontWeight: 'bold' }}>{team}</div>
-                        <div style={{ fontSize: '1.8rem', color: '#00f2ff', fontWeight: '900' }}>{roomData.totalScores[team] || 0}</div>
-                      </div>
-
-                      <button 
-                        onClick={() => updateRoom({ [`totalScores.${team}`]: increment(1) })}
-                        style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #00f2ff', color: '#00f2ff', background: 'none', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer' }}
-                      >+</button>
+                    <div key={team} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(-1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #ef4444', color: '#ef4444', background: 'none', fontSize: '1.8rem', fontWeight: '900' }}>-</button>
+                      <div style={{ textAlign: 'center', flex: 1 }}><div style={{ fontSize: '1.1rem', color: 'white', fontWeight: 'bold' }}>{team}</div><div style={{ fontSize: '1.8rem', color: '#00f2ff', fontWeight: '900' }}>{roomData.totalScores[team] || 0}</div></div>
+                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #00f2ff', color: '#00f2ff', background: 'none', fontSize: '1.8rem', fontWeight: '900' }}>+</button>
                     </div>
                   ))}
                 </div>
-
-                <button 
-                  onClick={() => updateRoom({ isPaused: false })} 
-                  style={{ height: '65px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '18px', fontWeight: '900', border: 'none', fontSize: '1.3rem', marginTop: '10px', cursor: 'pointer', boxShadow: '0 4px 15px rgba(0, 242, 255, 0.3)' }}
-                >המשך לשחק</button>
-                
-                <button 
-                  onClick={handleFullReset} 
-                  style={{ height: '55px', backgroundColor: 'transparent', border: '2px solid #ef4444', color: '#ef4444', borderRadius: '18px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}
-                >צא מהחדר</button>
+                <button onClick={() => updateRoom({ isPaused: false })} style={{ height: '65px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '18px', fontWeight: '900', border: 'none', fontSize: '1.3rem', marginTop: '10px' }}>המשך לשחק</button>
+                <button onClick={handleFullReset} style={{ height: '55px', backgroundColor: 'transparent', border: '2px solid #ef4444', color: '#ef4444', borderRadius: '18px', fontWeight: 'bold', fontSize: '1.1rem' }}>צא מהחדר</button>
               </div>
             </div>
           )}
