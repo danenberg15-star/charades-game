@@ -15,11 +15,9 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
-  // מראה (Ref) שקוראת תמיד את הנתון העדכני ביותר מבלי לאתחל את הטיימר מחדש
   const roomDataRef = useRef(roomData);
   useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
 
-  // חילוץ קוד חדר מהכתובת עבור כניסה חלקה
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -36,7 +34,6 @@ export default function FamilyAliasApp() {
     const isBot = currentP?.id?.startsWith('d_');
     const isHost = roomData.players?.[0]?.id === userId;
     
-    // בחדר עומר מאפשרים לכל אחד להריץ את הטיימר כדי למנוע קיפאון
     const shouldRunTimer = isIDescriber || (isBot && isHost) || (roomId === "עומר");
     if (!shouldRunTimer) return;
 
@@ -46,7 +43,7 @@ export default function FamilyAliasApp() {
 
       if (step === 4) {
         if (liveData.preGameTimer > 0) updateRoom({ preGameTimer: liveData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 5, roundScore: 0 }); 
+        else updateRoom({ step: 5, timeLeft: 60, roundScore: 0 }); 
       } else if (step === 5) {
         if (liveData.timeLeft > 0) updateRoom({ timeLeft: liveData.timeLeft - 1 });
         else {
@@ -147,17 +144,31 @@ export default function FamilyAliasApp() {
               onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
               editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
               onStart={() => {
-                const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
-                updateRoom({ step: 4, preGameTimer: 3, shuffledPools: getInitialShuffledPools(allCustom), poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] });
+                const updates: any = { step: 4, preGameTimer: 3, poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] };
+                // טעינה עצלה לחדר עומר
+                if (roomId === "עומר" && (!roomData.shuffledPools || roomData.shuffledPools.length === 0)) {
+                  const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
+                  updates.shuffledPools = getInitialShuffledPools(allCustom);
+                }
+                updateRoom(updates);
               }} 
               onExit={handleFullReset} 
             />
           )}
-          {step === 4 && currentP && <CountdownStep timer={roomData.preGameTimer} turnInfo={{name: currentP.name, team: roomData.teamNames[currentP.teamIdx]}} isTeamMode={true} currentPhase={roomData.currentPhase} />}
+          {step === 4 && currentP && (
+            <CountdownStep 
+              timer={roomData.preGameTimer} 
+              turnInfo={{name: currentP.name, team: roomData.teamNames[currentP.teamIdx]}} 
+              isTeamMode={true} 
+              currentPhase={roomData.currentPhase} 
+            />
+          )}
           {step === 5 && <GameStep roomData={roomData} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
           {step === 6 && (
             <ScoreStep 
-              scores={roomData.totalScores} entities={roomData.teamNames.slice(0, roomData.numTeams)} phaseEnded={roomData.phaseEnded} 
+              scores={roomData.totalScores} 
+              entities={roomData.teamNames.slice(0, roomData.numTeams)} 
+              phaseEnded={roomData.phaseEnded} 
               onNextRound={() => {
                 const nextTeamIdx = (roomData.currentTeamIdx + 1) % roomData.numTeams;
                 const teamPlayerIndices = { ...roomData.teamPlayerIndices };
