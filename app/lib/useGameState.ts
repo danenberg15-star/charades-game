@@ -43,15 +43,9 @@ export function useGameState() {
   };
 
   const handleFullReset = async () => { 
-    // איפוס חדר עומר מהשרת אם קיים
     if (roomId === "עומר" || localStorage.getItem("alias_roomId") === "עומר") {
-      try {
-        await deleteDoc(doc(db, "rooms", "עומר"));
-      } catch (e) {
-        console.error("Error clearing QA room", e);
-      }
+      try { await deleteDoc(doc(db, "rooms", "עומר")); } catch (e) { console.error("Error clearing QA room", e); }
     }
-    // ניקוי זיכרון מקומי וחזרה לדף הבית 
     localStorage.clear(); 
     window.location.href = '/'; 
   };
@@ -68,20 +62,17 @@ export function useGameState() {
       teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
       currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
     });
-
     localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
     setRoomId(id); setStep(3);
   };
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
-
     try {
       let targetStep = 0;
       await runTransaction(db, async (transaction) => {
         const roomRef = doc(db, "rooms", id);
         const snap = await transaction.get(roomRef);
-        
         if (!snap.exists()) {
           if (id === "עומר") {
             const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
@@ -91,38 +82,29 @@ export function useGameState() {
               players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
               timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
               teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-              preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+              preGameTimer: 3, 
+              shuffledPools: [], // ריק לכניסה מיידית ללא השהייה
+              gameDeck: [] 
             });
-            targetStep = 3;
-            return; 
-          } else {
-            throw new Error("ROOM_NOT_FOUND");
-          }
+            targetStep = 3; return; 
+          } else { throw new Error("ROOM_NOT_FOUND"); }
         }
-        
         const data = snap.data();
         targetStep = data.step;
-
         if (data.step === 3) {
           const currentPlayers = data.players || [];
           const isExisting = currentPlayers.find((p: any) => p.id === userId);
           let updatedPlayers;
-
           if (isExisting) {
             updatedPlayers = currentPlayers.map((p: any) => p.id === userId ? { ...p, name: payload.name, customWords: payload.customWords } : p);
           } else {
             updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
           }
-
           transaction.update(roomRef, { players: updatedPlayers, lastActivity: Date.now() });
         }
       });
-
-      localStorage.setItem("alias_roomId", id); 
-      localStorage.setItem("alias_userName", payload.name || "עומר");
-      setRoomId(id); 
-      setStep(targetStep); 
-      
+      localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name || "עומר");
+      setRoomId(id); setStep(targetStep); 
     } catch (error: any) {
       if (error.message === "ROOM_NOT_FOUND") alert("חדר לא נמצא");
       else { console.error("Join transaction failed: ", error); alert("שגיאה בהצטרפות לחדר, נסה שוב"); }
