@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react"; // הוספת useState לעיבוד ה-URL
 import { useGameState } from "./lib/useGameState";
 import { getInitialShuffledPools, shuffleArray } from "./lib/game-utils";
 import RulesStep from "./components/RulesStep"; 
@@ -13,6 +13,16 @@ import SevenBoomStep from "./components/SevenBoomStep";
 
 export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
+  const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
+
+  // חילוץ קוד חדר מה-URL
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get("room");
+      if (room) setUrlRoomId(room.toUpperCase());
+    }
+  }, []);
 
   const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
@@ -115,7 +125,8 @@ export default function FamilyAliasApp() {
   return (
     <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
-      {step === 1 && <EntryStep onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
+      {/* הזרקת קוד החדר לתוך EntryStep */}
+      {step === 1 && <EntryStep initialCode={urlRoomId} onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
       {roomData && (
         <>
           {step === 3 && (
@@ -158,7 +169,6 @@ export default function FamilyAliasApp() {
           {step === 7 && <VictoryStep winnerName={Object.keys(roomData.totalScores).reduce((a, b) => roomData.totalScores[a] > roomData.totalScores[b] ? a : b)} onRestart={handleFullReset} />}
           {step === 8 && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
 
-          {/* שכבת הפסקה גלובלית עם טבלת ניקוד ותיקון נקודות */}
           {roomData.isPaused && (
             <div style={{
               position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,

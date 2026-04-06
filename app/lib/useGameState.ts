@@ -60,19 +60,31 @@ export function useGameState() {
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
+    
+    // לוגיקה מעודכנת לחדר "עומר": הצטרפות במקום דריסה
     if (id === "עומר") {
-      const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-      localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
-      await setDoc(doc(db, "rooms", "עומר"), { 
-        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-        gameMode: "team", numTeams: 2, difficulty: "easy", 
-        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-        timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
-        teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-        preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
-      });
+      const snapOmer = await getDoc(doc(db, "rooms", "עומר"));
+      localStorage.setItem("alias_roomId", "עומר"); 
+      localStorage.setItem("alias_userName", payload.name || "עומר");
+      
+      if (snapOmer.exists()) {
+        await updateDoc(doc(db, "rooms", "עומר"), { 
+          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }) 
+        });
+      } else {
+        const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
+        await setDoc(doc(db, "rooms", "עומר"), { 
+          id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+          gameMode: "team", numTeams: 2, difficulty: "easy", 
+          players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+          timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+          teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
+          preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+        });
+      }
       setRoomId("עומר"); setStep(3); return;
     }
+
     const snap = await getDoc(doc(db, "rooms", id));
     if (snap.exists()) { 
       const data = snap.data();

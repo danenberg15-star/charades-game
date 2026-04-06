@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, CSSProperties } from "react";
+import React, { useState, CSSProperties, useEffect } from "react";
 
 const localStyles: { [key: string]: CSSProperties } = {
   flexLayout: { 
@@ -10,7 +10,6 @@ const localStyles: { [key: string]: CSSProperties } = {
   },
   topSection: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', width: '100%' },
   entryLogo: { width: '80%', height: 'auto', maxHeight: '30vh', objectFit: 'contain', borderRadius: '25px' },
-  // הסרנו את הגדרת ה-entryTitle מהסטייל
   formSection: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '20px' },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
   label: { color: '#00f2ff', fontSize: '0.9rem', fontWeight: 'bold', paddingRight: '5px' },
@@ -53,17 +52,22 @@ const CATEGORIES = [
   "מגיש/עיתונאי", "כוכב ריאליטי", "OTHER (אחר)"
 ];
 
-export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
+// הוספת initialCode ל-Props
+export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: any) {
   const [name, setName] = useState("");
-  const [inputCode, setInputCode] = useState("");
+  const [inputCode, setInputCode] = useState(initialCode || "");
   const [customWords, setCustomWords] = useState<any[]>([]);
   
   const [newHeb, setNewHeb] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
 
+  // עדכון השדה אם קוד מוזרק מה-URL
+  useEffect(() => {
+    if (initialCode) setInputCode(initialCode);
+  }, [initialCode]);
+
   const handleAddWord = () => {
     if (!newHeb.trim()) return;
-    // שומרים על מבנה האובייקט עם en ריק כדי לא לשבור תצוגה במסכים אחרים
     setCustomWords([...customWords, { word: newHeb.trim(), en: "", category: newCat }]);
     setNewHeb("");
   };
@@ -81,7 +85,6 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
         <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
-        {/* הכותרת SAME-SAME הוסרה מכאן */}
       </div>
 
       <div style={localStyles.formSection}>
@@ -102,7 +105,6 @@ export default function EntryStep({ onJoin, onCreate, onSetName }: any) {
             value={newHeb} onChange={e => setNewHeb(e.target.value)} 
             style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
           />
-          {/* שורת הקלט באנגלית הוסרה מכאן */}
           <select 
             value={newCat} onChange={e => setNewCat(e.target.value)} 
             style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}
