@@ -54,7 +54,6 @@ export default function SetupStep(props: SetupStepProps) {
   };
 
   const handleRemoveTeam = (idx: number) => {
-    // העברת שחקנים לקבוצה הראשונה לפני המחיקה
     props.players.forEach(p => {
       if (p.teamIdx === idx) props.onPlayerMove(p.id, 0);
       else if (p.teamIdx > idx) props.onPlayerMove(p.id, p.teamIdx - 1);
@@ -90,9 +89,10 @@ export default function SetupStep(props: SetupStepProps) {
     if (found !== hoveredTeam) setHoveredTeam(found);
   };
 
+  // תיקון: עדכון טקסט השיתוף והכתובת למשחק "תופסים את הסלב"
   const handleWhatsAppShare = () => {
-    const shareUrl = `https://family-alias.vercel.app/?room=${props.roomId}`;
-    const text = `בואו לשחק איתי סלבס! כנסו לקישור והצטרפו לחדר: ${shareUrl}`;
+    const shareUrl = `${window.location.origin}/?room=${props.roomId}`;
+    const text = `בואו לשחק איתי "נחשו את הסלב"! כנסו לקישור והצטרפו לחדר: ${shareUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -124,7 +124,6 @@ export default function SetupStep(props: SetupStepProps) {
     >
       <button onClick={props.onExit} style={{...styles.exitBtnRed, zIndex: 10, top: '20px', left: '20px'}}>✕</button>
 
-      {/* Header - Room Info */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
         <h1 style={{ color: 'white', fontSize: '1.3rem', margin: 0, fontWeight: '900' }}>הגדרות חדר</h1>
         <div style={{ 
@@ -141,9 +140,8 @@ export default function SetupStep(props: SetupStepProps) {
         </div>
       </div>
 
-      <div style={{ height: '8px' }}></div> {/* Spacer במקום טוגלים */}
+      <div style={{ height: '8px' }}></div> 
 
-      {/* Grid של קבוצות ושחקנים - 2 עמודות קבועות */}
       <div style={{ 
         ...styles.setupGrid, 
         gridTemplateColumns: '1fr 1fr',
@@ -216,7 +214,6 @@ export default function SetupStep(props: SetupStepProps) {
         )}
       </div>
 
-      {/* Footer - Start Button */}
       <div style={{ width: '100%', paddingBottom: '10px' }}>
         {!canStart && <p style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center', marginBottom: '10px' }}>לפחות 2 שחקנים בכל קבוצה כדי להתחיל</p>}
         <button 
@@ -234,7 +231,6 @@ export default function SetupStep(props: SetupStepProps) {
         </button>
       </div>
 
-      {/* Ghost Element for Dragging */}
       {draggedPlayer && (
         <div ref={ghostRef} style={{ 
           position: 'fixed', zIndex: 9999, pointerEvents: 'none', 
