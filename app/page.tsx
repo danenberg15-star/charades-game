@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react"; 
+import { useEffect, useState } from "react"; 
 import { useGameState } from "./lib/useGameState";
 import { getInitialShuffledPools, shuffleArray } from "./lib/game-utils";
 import RulesStep from "./components/RulesStep"; 
@@ -14,9 +14,6 @@ import SevenBoomStep from "./components/SevenBoomStep";
 export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
-  const roomDataRef = useRef(roomData);
-
-  useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -33,25 +30,19 @@ export default function FamilyAliasApp() {
     if (!roomId || !roomData || !currentP || roomData.isPaused || step < 4 || step === 8) return;
     const isBot = currentP?.id?.startsWith('d_');
     const isHost = roomData.players?.[0]?.id === userId;
-    
-    // בחדר עומר, נאפשר לכל מי שנכנס להריץ את הטיימר אם הוא תקוע
-    const shouldRunTimer = isIDescriber || (isBot && isHost) || (roomId === "עומר");
-    if (!shouldRunTimer) return;
+    if (!isIDescriber && !(isBot && isHost)) return;
 
     const interval = setInterval(() => {
-      const currentData = roomDataRef.current;
-      if (!currentData || currentData.isPaused) return;
-
       if (step === 4) {
-        if (currentData.preGameTimer > 0) updateRoom({ preGameTimer: currentData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 60, roundScore: 0 }); 
+        if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
+        else updateRoom({ step: 5, timeLeft: 3, roundScore: 0 }); // QA: שונה מ-60 ל-3
       } else if (step === 5) {
-        if (currentData.timeLeft > 0) updateRoom({ timeLeft: currentData.timeLeft - 1 });
+        if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
         else updateRoom({ step: 6, phaseEnded: null });
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [step, roomId, isIDescriber, userId, updateRoom]);
+  }, [step, roomId, roomData?.isPaused, isIDescriber, currentP, updateRoom]);
 
   if (!mounted) return null;
 
@@ -67,24 +58,60 @@ export default function FamilyAliasApp() {
       } else {
         pool.splice(roomData.poolIndex, 1);
         pool.push(currentWord);
-        updateRoom({ [`totalScores.${describerTeam}`]: increment(-2), roundScore: increment(-2), shuffledPools: pool });
+        updateRoom({ 
+          [`totalScores.${describerTeam}`]: increment(-2), 
+          roundScore: increment(-2), 
+          shuffledPools: pool 
+        });
       }
       return;
     }
 
     if (roomData.currentPhase === 'A') {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
-      const updates: any = { [`totalScores.${describerTeam}`]: increment(1), [`totalScores.${targetName}`]: increment(1), poolIndex: increment(1), roundScore: increment(1), gameDeck: updatedDeck };
-      if (updatedDeck.length >= roomData.players.length * 5) {
-        Object.assign(updates, { poolIndex: 0, shuffledPools: shuffleArray(updatedDeck), currentPhase: 'B', step: 6, phaseEnded: 'א' });
+      const nPlayers = roomData.players.length;
+      
+      const updates: any = {
+        [`totalScores.${describerTeam}`]: increment(1),
+        [`totalScores.${targetName}`]: increment(1),
+        poolIndex: increment(1),
+        roundScore: increment(1),
+        gameDeck: updatedDeck
+      };
+
+      if (updatedDeck.length >= nPlayers * 5) {
+        Object.assign(updates, { 
+          poolIndex: 0, 
+          shuffledPools: shuffleArray(updatedDeck), 
+          currentPhase: 'B', 
+          step: 6, 
+          phaseEnded: 'א' 
+        });
       }
       updateRoom(updates);
     } else {
-      const updates: any = { [`totalScores.${targetName}`]: increment(points), roundScore: increment(points), poolIndex: increment(1) };
+      const updates: any = {
+        [`totalScores.${targetName}`]: increment(points),
+        roundScore: increment(points),
+        poolIndex: increment(1)
+      };
+
       if ((roomData.poolIndex + 1) >= pool.length) {
-        if (roomData.currentPhase === 'B') updateRoom({ ...updates, currentPhase: 'C', shuffledPools: shuffleArray(pool), poolIndex: 0, step: 6, phaseEnded: 'ב' });
-        else updateRoom({ ...updates, step: 7 });
-      } else updateRoom(updates);
+        if (roomData.currentPhase === 'B') {
+          updateRoom({ 
+            ...updates, 
+            currentPhase: 'C', 
+            shuffledPools: shuffleArray(pool), 
+            poolIndex: 0, 
+            step: 6, 
+            phaseEnded: 'ב' 
+          });
+        } else {
+          updateRoom({ ...updates, step: 7 });
+        }
+      } else {
+        updateRoom(updates);
+      }
     }
   };
 
