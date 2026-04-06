@@ -39,11 +39,11 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
   };
 
   const startAction = (type: 'create' | 'join') => {
-    if (!name.trim()) return alert("נא להזין שם שחקן");
-    if (type === 'join' && !inputCode.trim()) return alert("נא להזין קוד חדר");
+    if (!name.trim()) return alert("נא להזין שם שחקן 🙂");
+    if (type === 'join' && !inputCode.trim()) return alert("נא להזין קוד חדר כדי להצטרף");
     const payload = { name: name.trim(), customWords };
     if (type === 'create') onCreate(payload);
-    else onJoin(inputCode.trim(), payload);
+    else onJoin(inputCode.trim().toUpperCase(), payload);
   };
 
   return (
@@ -51,8 +51,8 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
       <div style={localStyles.topSection}><img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} /></div>
       <div style={localStyles.formSection}>
         <div style={localStyles.inputGroup}>
-          <label style={localStyles.label}>השם שלך:</label>
-          <input type="text" value={name} onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} placeholder="איך יקראו לך במשחק?" style={localStyles.entryInput} />
+          <label style={localStyles.label}>איך קוראים לך?</label>
+          <input type="text" value={name} onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} placeholder="הכנס שם שחקן" style={localStyles.entryInput} />
         </div>
         <div style={localStyles.customBox}>
           <label style={localStyles.label}>הוספת שמות אישיים לחבילה:</label>
@@ -61,9 +61,10 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
           <button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button>
           <div style={localStyles.wordList}>{customWords.map((w, i) => (<span key={i} style={localStyles.wordTag}>{w.word}</span>))}</div>
         </div>
-        <div style={{...localStyles.inputGroup, marginTop: '10px'}}>
-          <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="יש לך קוד חדר?" style={{...localStyles.entryInput, borderStyle: 'dashed'}} />
-          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button>
+        <div style={{...localStyles.inputGroup, marginTop: '10px', backgroundColor: 'rgba(0, 242, 255, 0.05)', borderRadius: '20px', padding: '12px', border: '1px solid rgba(0, 242, 255, 0.2)'}}>
+          <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="קוד חדר (למשל: עומר)" style={localStyles.entryInput} />
+          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות למשחק</button>
+          {initialCode && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '5px' }}>כניסה אוטומטית לחדר: {inputCode}</p>}
         </div>
       </div>
       <div style={localStyles.actionButtons}><button onClick={() => startAction('create')} style={localStyles.secondaryButton}>+ פתיחת חדר חדש</button></div>
