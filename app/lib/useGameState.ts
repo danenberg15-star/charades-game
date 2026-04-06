@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect } from "react";
 import { db } from "./firebase";
 import { doc, setDoc, onSnapshot, updateDoc, arrayUnion, getDoc, deleteDoc, increment } from "firebase/firestore";
@@ -29,8 +28,7 @@ export function useGameState() {
         if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
             if (roomId !== "עומר") {
               if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
-              handleFullReset(); 
-              return;
+              handleFullReset(); return;
             }
         }
         setRoomData(d);
@@ -57,8 +55,7 @@ export function useGameState() {
       gameMode: "team", difficulty: "easy", numTeams: 2,
       players: [{ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, 
-      timeLeft: 3, // QA: שונה מ-60 ל-3
+      totalScores: {}, roundScore: 0, timeLeft: 3, // QA
       isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
       teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
       currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
@@ -67,34 +64,32 @@ export function useGameState() {
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
+    localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
+
+    if (id === "עומר") {
+      const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
+      await setDoc(doc(db, "rooms", "עומר"), { 
+        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+        gameMode: "team", numTeams: 2, difficulty: "easy", 
+        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+        timeLeft: 3, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+        teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
+        preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+      });
+      setRoomId("עומר"); setStep(3); return;
+    }
+
     const snap = await getDoc(doc(db, "rooms", id));
-    
-    if (snap.exists()) {
+    if (snap.exists()) { 
       const data = snap.data();
       setRoomId(id); setStep(data.step); 
-      localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
-      
-      await updateDoc(doc(db, "rooms", id), { 
-        players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
-        lastActivity: Date.now()
-      });
-    } else {
-      if (id === "עומר") {
-        const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-        await setDoc(doc(db, "rooms", "עומר"), { 
-          id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-          gameMode: "team", numTeams: 2, difficulty: "easy", 
-          players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-          timeLeft: 3, // QA: שונה מ-60 ל-3
-          isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
-          teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-          preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
-        });
-        setRoomId("עומר"); setStep(3);
-      } else {
-        alert("חדר לא נמצא");
-      }
-    }
+      if (data.step === 3) {
+        await updateDoc(doc(db, "rooms", id), { 
+          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
+          lastActivity: Date.now() 
+        }); 
+      } 
+    } else alert("חדר לא נמצא");
   };
 
   return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };

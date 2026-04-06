@@ -15,6 +15,7 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
+  // חילוץ קוד חדר מהכתובת (URL)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
@@ -35,13 +36,14 @@ export default function FamilyAliasApp() {
     const interval = setInterval(() => {
       if (step === 4) {
         if (roomData.preGameTimer > 0) updateRoom({ preGameTimer: roomData.preGameTimer - 1 });
-        else updateRoom({ step: 5, timeLeft: 3, roundScore: 0 }); // QA: שונה מ-60 ל-3
+        else updateRoom({ step: 5, timeLeft: 3, roundScore: 0 }); // QA: שונה ל-3 שניות
       } else if (step === 5) {
         if (roomData.timeLeft > 0) updateRoom({ timeLeft: roomData.timeLeft - 1 });
         else updateRoom({ step: 6, phaseEnded: null });
       }
     }, 1000);
     return () => clearInterval(interval);
+    // הסרנו את roomData.preGameTimer ו-roomData.timeLeft מהתלויות כדי למנוע את הקיפאון
   }, [step, roomId, roomData?.isPaused, isIDescriber, currentP, updateRoom]);
 
   if (!mounted) return null;
@@ -58,11 +60,7 @@ export default function FamilyAliasApp() {
       } else {
         pool.splice(roomData.poolIndex, 1);
         pool.push(currentWord);
-        updateRoom({ 
-          [`totalScores.${describerTeam}`]: increment(-2), 
-          roundScore: increment(-2), 
-          shuffledPools: pool 
-        });
+        updateRoom({ [`totalScores.${describerTeam}`]: increment(-2), roundScore: increment(-2), shuffledPools: pool });
       }
       return;
     }
@@ -70,7 +68,6 @@ export default function FamilyAliasApp() {
     if (roomData.currentPhase === 'A') {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
-      
       const updates: any = {
         [`totalScores.${describerTeam}`]: increment(1),
         [`totalScores.${targetName}`]: increment(1),
@@ -78,15 +75,8 @@ export default function FamilyAliasApp() {
         roundScore: increment(1),
         gameDeck: updatedDeck
       };
-
       if (updatedDeck.length >= nPlayers * 5) {
-        Object.assign(updates, { 
-          poolIndex: 0, 
-          shuffledPools: shuffleArray(updatedDeck), 
-          currentPhase: 'B', 
-          step: 6, 
-          phaseEnded: 'א' 
-        });
+        Object.assign(updates, { poolIndex: 0, shuffledPools: shuffleArray(updatedDeck), currentPhase: 'B', step: 6, phaseEnded: 'א' });
       }
       updateRoom(updates);
     } else {
@@ -95,17 +85,9 @@ export default function FamilyAliasApp() {
         roundScore: increment(points),
         poolIndex: increment(1)
       };
-
       if ((roomData.poolIndex + 1) >= pool.length) {
         if (roomData.currentPhase === 'B') {
-          updateRoom({ 
-            ...updates, 
-            currentPhase: 'C', 
-            shuffledPools: shuffleArray(pool), 
-            poolIndex: 0, 
-            step: 6, 
-            phaseEnded: 'ב' 
-          });
+          updateRoom({ ...updates, currentPhase: 'C', shuffledPools: shuffleArray(pool), poolIndex: 0, step: 6, phaseEnded: 'ב' });
         } else {
           updateRoom({ ...updates, step: 7 });
         }
@@ -115,9 +97,7 @@ export default function FamilyAliasApp() {
     }
   };
 
-  const gameTargets = roomData?.currentPhase === 'A' || step === 8
-    ? (roomData.teamNames.slice(0, roomData.numTeams) || [])
-    : [roomData?.teamNames[currentP?.teamIdx]];
+  const gameTargets = roomData?.currentPhase === 'A' || step === 8 ? (roomData.teamNames.slice(0, roomData.numTeams) || []) : [roomData?.teamNames[currentP?.teamIdx]];
 
   return (
     <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
@@ -153,7 +133,6 @@ export default function FamilyAliasApp() {
                 const nextPlayer = playersInNextTeam[teamPlayerIndices[nextTeamIdx] % playersInNextTeam.length];
                 const globalIdx = roomData.players.findIndex((p: any) => p.id === nextPlayer.id);
                 const nextScore = Number(roomData.totalScores[roomData.teamNames[nextTeamIdx]] || 0);
-
                 if (roomData.currentPhase !== 'A' && nextScore > 0 && nextScore % 7 === 0) {
                   updateRoom({ step: 8, currentTurnIdx: globalIdx, currentTeamIdx: nextTeamIdx, teamPlayerIndices, roundScore: 0, phaseEnded: null });
                 } else {
@@ -164,7 +143,6 @@ export default function FamilyAliasApp() {
           )}
           {step === 7 && <VictoryStep winnerName={Object.keys(roomData.totalScores).reduce((a, b) => roomData.totalScores[a] > roomData.totalScores[b] ? a : b)} onRestart={handleFullReset} />}
           {step === 8 && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
-
           {roomData.isPaused && (
             <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(5, 8, 28, 0.98)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '20px', direction: 'rtl', backdropFilter: 'blur(10px)' }}>
               <div style={{ width: '100%', maxWidth: '450px', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '30px', border: '2px solid rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '20px', boxShadow: '0 0 40px rgba(0, 242, 255, 0.2)' }}>
@@ -172,14 +150,14 @@ export default function FamilyAliasApp() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {roomData.teamNames.slice(0, roomData.numTeams).map((team: string) => (
                     <div key={team} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(-1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #ef4444', color: '#ef4444', background: 'none', fontSize: '1.8rem', fontWeight: '900' }}>-</button>
-                      <div style={{ textAlign: 'center', flex: 1 }}><div style={{ color: 'white', fontWeight: 'bold' }}>{team}</div><div style={{ fontSize: '1.8rem', color: '#00f2ff', fontWeight: '900' }}>{roomData.totalScores[team] || 0}</div></div>
-                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #00f2ff', color: '#00f2ff', background: 'none', fontSize: '1.8rem', fontWeight: '900' }}>+</button>
+                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(-1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #ef4444', color: '#ef4444', background: 'none', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer' }}>-</button>
+                      <div style={{ textAlign: 'center', flex: 1 }}><div style={{ fontSize: '1.1rem', color: 'white', fontWeight: 'bold' }}>{team}</div><div style={{ fontSize: '1.8rem', color: '#00f2ff', fontWeight: '900' }}>{roomData.totalScores[team] || 0}</div></div>
+                      <button onClick={() => updateRoom({ [`totalScores.${team}`]: increment(1) })} style={{ width: '45px', height: '45px', borderRadius: '12px', border: '2px solid #00f2ff', color: '#00f2ff', background: 'none', fontSize: '1.8rem', fontWeight: '900', cursor: 'pointer' }}>+</button>
                     </div>
                   ))}
                 </div>
-                <button onClick={() => updateRoom({ isPaused: false })} style={{ height: '65px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '18px', fontWeight: '900', border: 'none', fontSize: '1.3rem', marginTop: '10px' }}>המשך לשחק</button>
-                <button onClick={handleFullReset} style={{ height: '55px', backgroundColor: 'transparent', border: '2px solid #ef4444', color: '#ef4444', borderRadius: '18px', fontWeight: 'bold', fontSize: '1.1rem' }}>צא מהחדר</button>
+                <button onClick={() => updateRoom({ isPaused: false })} style={{ height: '65px', backgroundColor: '#00f2ff', color: '#05081c', borderRadius: '18px', fontWeight: '900', border: 'none', fontSize: '1.3rem', marginTop: '10px', cursor: 'pointer' }}>המשך לשחק</button>
+                <button onClick={handleFullReset} style={{ height: '55px', backgroundColor: 'transparent', border: '2px solid #ef4444', color: '#ef4444', borderRadius: '18px', fontWeight: 'bold', fontSize: '1.1rem', cursor: 'pointer' }}>צא מהחדר</button>
               </div>
             </div>
           )}
