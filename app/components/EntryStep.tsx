@@ -28,9 +28,7 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
   const [newHeb, setNewHeb] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
 
-  useEffect(() => {
-    if (initialCode) setInputCode(initialCode);
-  }, [initialCode]);
+  useEffect(() => { if (initialCode) setInputCode(initialCode); }, [initialCode]);
 
   const handleAddWord = () => {
     if (!newHeb.trim()) return;
@@ -48,29 +46,13 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
 
   return (
     <div style={localStyles.flexLayout}>
-      <div style={localStyles.topSection}>
-        <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
-      </div>
+      <div style={localStyles.topSection}><img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} /></div>
       <div style={localStyles.formSection}>
-        <div style={localStyles.inputGroup}>
-          <label style={localStyles.label}>השם שלך:</label>
-          <input type="text" value={name} onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} placeholder="איך יקראו לך במשחק?" style={localStyles.entryInput} />
-        </div>
-        <div style={localStyles.customBox}>
-          <label style={localStyles.label}>הוספת שמות אישיים לחבילה:</label>
-          <input placeholder="שם בעברית (למשל: דודה שרה)" value={newHeb} onChange={e => setNewHeb(e.target.value)} style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} />
-          <select value={newCat} onChange={e => setNewCat(e.target.value)} style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select>
-          <button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button>
-          <div style={localStyles.wordList}>{customWords.map((w, i) => (<span key={i} style={localStyles.wordTag}>{w.word}</span>))}</div>
-        </div>
-        <div style={{...localStyles.inputGroup, marginTop: '10px'}}>
-          <input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="יש לך קוד חדר?" style={{...localStyles.entryInput, borderStyle: 'dashed'}} />
-          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button>
-        </div>
+        <div style={localStyles.inputGroup}><label style={localStyles.label}>השם שלך:</label><input type="text" value={name} onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} placeholder="איך יקראו לך במשחק?" style={localStyles.entryInput} /></div>
+        <div style={localStyles.customBox}><label style={localStyles.label}>הוספת שמות אישיים לחבילה:</label><input placeholder="שם בעברית (למשל: דודה שרה)" value={newHeb} onChange={e => setNewHeb(e.target.value)} style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} /><select value={newCat} onChange={e => setNewCat(e.target.value)} style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}>{CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}</select><button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button><div style={localStyles.wordList}>{customWords.map((w, i) => (<span key={i} style={localStyles.wordTag}>{w.word}</span>))}</div></div>
+        <div style={{...localStyles.inputGroup, marginTop: '10px'}}><input type="text" value={inputCode} onChange={(e) => setInputCode(e.target.value.toUpperCase())} placeholder="יש לך קוד חדר?" style={{...localStyles.entryInput, borderStyle: 'dashed'}} /><button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button></div>
       </div>
-      <div style={localStyles.actionButtons}>
-        <button onClick={() => startAction('create')} style={localStyles.secondaryButton}>+ פתיחת חדר חדש</button>
-      </div>
+      <div style={localStyles.actionButtons}><button onClick={() => startAction('create')} style={localStyles.secondaryButton}>+ פתיחת חדר חדש</button></div>
     </div>
   );
 }

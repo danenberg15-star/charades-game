@@ -21,14 +21,13 @@ export function useGameState() {
 
   useEffect(() => {
     if (!roomId) return;
-    return onSnapshot(doc(db, "rooms", roomId), async (snap) => {
+    return onSnapshot(doc(db, "rooms", roomId), (snap) => {
       if (snap.exists()) {
         const d = snap.data();
         const INACTIVITY_LIMIT = 15 * 60 * 1000; 
         if (d.lastActivity && (Date.now() - d.lastActivity > INACTIVITY_LIMIT)) {
-            // החרגת חדר עומר ממנגנון המחיקה האוטומטית
             if (roomId !== "עומר") {
-              if (d.players && d.players[0].id === userId) await deleteDoc(doc(db, "rooms", roomId));
+              if (d.players && d.players[0].id === userId) deleteDoc(doc(db, "rooms", roomId));
               handleFullReset(); 
               return;
             }
@@ -66,35 +65,34 @@ export function useGameState() {
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
+    localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
+
+    // חדר "עומר" - איפוס מלא בכל כניסה (כמו ב-SAME SAME)
+    if (id === "עומר") {
+      const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
+      await setDoc(doc(db, "rooms", "עומר"), { 
+        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+        gameMode: "team", numTeams: 2, difficulty: "easy", 
+        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+        timeLeft: 60, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+        teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
+        preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+      });
+      setRoomId("עומר"); setStep(3);
+      return;
+    }
+
     const snap = await getDoc(doc(db, "rooms", id));
-    
-    if (snap.exists()) {
+    if (snap.exists()) { 
       const data = snap.data();
       setRoomId(id); setStep(data.step); 
-      localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
-      
-      // שימוש ב-arrayUnion כדי להוסיף שחקן במקום לדרוס את הקיימים
-      await updateDoc(doc(db, "rooms", id), { 
-        players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
-        lastActivity: Date.now()
-      });
-    } else {
-      if (id === "עומר") {
-        // אם חדר עומר לא קיים בכלל, יוצרים אותו כחדר QA
-        const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-        await setDoc(doc(db, "rooms", "עומר"), { 
-          id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-          gameMode: "team", numTeams: 2, difficulty: "easy", 
-          players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-          timeLeft: 60, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
-          teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-          preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
-        });
-        setRoomId("עומר"); setStep(3);
-      } else {
-        alert("חדר לא נמצא");
-      }
-    }
+      if (data.step === 3) {
+        await updateDoc(doc(db, "rooms", id), { 
+          players: arrayUnion({ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }),
+          lastActivity: Date.now()
+        }); 
+      } 
+    } else alert("חדר לא נמצא");
   };
 
   return { mounted, userId, roomId, roomData, step, setStep, userName, setUserName, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, increment };
