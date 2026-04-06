@@ -73,32 +73,34 @@ export function useGameState() {
 
   const handleJoinRoom = async (idInput: string, payload: { name: string, customWords: any[] }) => {
     const id = idInput.toUpperCase();
-    if (id === "עומר") {
-      const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-      await setDoc(doc(db, "rooms", "עומר"), { 
-        id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
-        gameMode: "team", numTeams: 2, difficulty: "easy", 
-        players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-        timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
-        teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-        preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
-      });
-      localStorage.setItem("alias_roomId", "עומר"); localStorage.setItem("alias_userName", payload.name || "עומר");
-      setRoomId("עומר"); setStep(3); return;
-    }
 
     try {
       let targetStep = 0;
       
-      // שימוש בטרנזקציה למניעת דריסת נתונים אם מספר שחקנים מצטרפים במקביל או ה-Host מעדכן משהו
       await runTransaction(db, async (transaction) => {
         const roomRef = doc(db, "rooms", id);
         const snap = await transaction.get(roomRef);
         
         if (!snap.exists()) {
-          throw new Error("ROOM_NOT_FOUND");
+          // אם זה חדר עומר והוא לא קיים, יוצרים אותו בצורה מסודרת
+          if (id === "עומר") {
+            const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
+            transaction.set(roomRef, { 
+              id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+              gameMode: "team", numTeams: 2, difficulty: "easy", 
+              players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
+              timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+              teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
+              preGameTimer: 3, shuffledPools: getInitialShuffledPools(payload.customWords), gameDeck: [] 
+            });
+            targetStep = 3;
+            return; 
+          } else {
+            throw new Error("ROOM_NOT_FOUND");
+          }
         }
         
+        // החדר קיים (כולל חדר עומר פעיל) - מוסיפים את השחקן למערך בלי לדרוס
         const data = snap.data();
         targetStep = data.step;
 
@@ -120,9 +122,8 @@ export function useGameState() {
         }
       });
 
-      // רק אחרי שהטרנזקציה עברה בהצלחה, פותחים לשחקן את המסך
       localStorage.setItem("alias_roomId", id); 
-      localStorage.setItem("alias_userName", payload.name);
+      localStorage.setItem("alias_userName", payload.name || "עומר");
       setRoomId(id); 
       setStep(targetStep); 
       
