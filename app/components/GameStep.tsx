@@ -16,10 +16,11 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
     const difficulty = roomData.difficulty || "easy";
     const pool = roomData.shuffledPools || [];
     const index = roomData.poolIndex || 0;
+    const currentWord = pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" };
     const showImage = difficulty === "easy";
     
     return { 
-      ...(pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" }), 
+      ...currentWord,
       showImage 
     };
   }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty]);
@@ -35,10 +36,8 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
 
   return (
     <div style={s.layout}>
-      {/* כפתור יציאה (X) לאיפוס המשחק */}
       <button onClick={onExit} style={s.exitBtn}>✕</button>
 
-      {/* תפריט השהייה עם עריכת נקודות */}
       {roomData.isPaused && (
         <div style={s.pauseOverlay}>
           <div style={s.pauseModal}>
@@ -90,11 +89,9 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
                 {wordData.showImage && wordData.img && (
                   <div style={s.imgBox}><img src={wordData.img} alt="" style={s.img} /></div>
                 )}
-                {/* שם הדמות מוגדל */}
+                {/* שם הדמות והקטגוריה בדיוק באותו גודל וסגנון, ללא אנגלית */}
                 <div style={wordData.showImage ? s.heb : s.hebL}>{wordData.word}</div>
-                {/* הקטגוריה באותו פונט שמן כמו הדמות, מודגשת בצבע תכלת */}
                 <div style={wordData.showImage ? s.hebCat : s.hebCatL}>{wordData.category}</div>
-                <div style={wordData.showImage ? s.en : s.enL}>{wordData.en}</div>
               </>
             ) : (
               <div style={{ textAlign: 'center' }}>
@@ -136,11 +133,9 @@ const s: any = {
   imgBox: { height: '180px', maxHeight: '20vh', marginBottom: '15px' },
   img: { height: '100%', objectFit: 'contain' },
   heb: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
-  hebCat: { fontSize: '1.8rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '5px' },
-  en: { fontSize: '1.2rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: 'white', marginTop: '10px' },
+  hebCat: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '5px' }, 
   hebL: { fontSize: '3.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
-  hebCatL: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '10px' },
-  enL: { fontSize: '1.5rem', opacity: 0.6, textAlign: 'center', wordBreak: 'break-word', color: 'white', marginTop: '15px' },
+  hebCatL: { fontSize: '3.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '10px' }, 
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '15px', flexShrink: 0 },
   target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none', cursor: 'pointer' },
   pauseOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', backgroundColor: 'rgba(5, 8, 28, 0.95)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', direction: 'rtl' },

@@ -11,12 +11,37 @@ export const shuffleArray = (array: any[]) => {
   return newArr;
 };
 
+// מילון תרגום קטגוריות למקרה שהן באנגלית בקובץ המקור
+const CATEGORY_MAP: Record<string, string> = {
+  'Actor': 'שחקן/ית',
+  'Singer': 'זמר/ת',
+  'Athlete': 'ספורטאי/ת',
+  'Politician': 'פוליטיקאי/ת',
+  'Businessperson': 'איש/ת עסקים',
+  'Model': 'דוגמן/ית',
+  'Presenter': 'מנחה/ת טלוויזיה',
+  'Artist': 'אמן/ית',
+  'Writer': 'סופר/ת',
+  'Scientist': 'מדען/ית',
+  'Comedian': 'קומיקאי/ת',
+  'Director': 'במאי/ת',
+  'TV Personality': 'אישיות טלוויזיונית',
+  'Journalist': 'עיתונאי/ת',
+  'Reality Star': 'כוכב/ת ריאליטי'
+};
+
 /**
  * יוצרת רשימת מילים אחת ומאוחדת למשחק.
  * השמות שהוזנו ידנית על ידי השחקנים (customWords) יופיעו תמיד ראשונים.
  */
 export const getInitialShuffledPools = (customWords: any[] = []) => {
-  const shuffledCelebs = shuffleArray(CELEBS_WORDS);
+  // מוודאים שכל מפורסם מקבל קטגוריה בעברית
+  const mappedCelebs = CELEBS_WORDS.map((c: any) => ({
+    ...c,
+    category: CATEGORY_MAP[c.category] || c.category 
+  }));
+  
+  const shuffledCelebs = shuffleArray(mappedCelebs);
   
   // איחוד: מילים מותאמות אישית בראש, ואז כל השאר
   return [...customWords, ...shuffledCelebs];
