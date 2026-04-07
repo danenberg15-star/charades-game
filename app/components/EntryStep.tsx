@@ -20,7 +20,20 @@ const localStyles: { [key: string]: CSSProperties } = {
   },
   customBox: { 
     backgroundColor: 'rgba(0, 242, 255, 0.03)', borderRadius: '20px', padding: '15px', 
-    border: '1px dashed rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '10px' 
+    border: '1px dashed rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '10px',
+    transition: 'all 0.3s ease'
+  },
+  // סגנון חדש לכותרת המתקפלת
+  accordionHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', width: '100%'
+  },
+  // סגנון לכפתור הפלוס
+  plusSign: {
+    color: '#00f2ff', fontSize: '1.8rem', fontWeight: '900', marginLeft: '5px'
+  },
+  // טקסט "לא חובה" בזהב
+  goldText: {
+    color: '#FFD700', fontWeight: 'bold'
   },
   addBtn: { 
     backgroundColor: '#00f2ff', color: '#05081c', border: 'none', borderRadius: '10px', 
@@ -52,16 +65,15 @@ const CATEGORIES = [
   "מגיש/עיתונאי", "כוכב ריאליטי", "OTHER (אחר)"
 ];
 
-// הוספנו את initialCode ל-Props
 export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: any) {
   const [name, setName] = useState("");
   const [inputCode, setInputCode] = useState(initialCode || "");
   const [customWords, setCustomWords] = useState<any[]>([]);
+  const [isExpanded, setIsExpanded] = useState(false); // התפריט סגור כברירת מחדל
   
   const [newHeb, setNewHeb] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
 
-  // זיהוי הקוד מה-URL והכנסתו לשדה
   useEffect(() => {
     if (initialCode) setInputCode(initialCode);
   }, [initialCode]);
@@ -99,25 +111,37 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
         </div>
 
         <div style={localStyles.customBox}>
-          <label style={localStyles.label}>הוספת שמות אישיים לחבילה:</label>
-          <input 
-            placeholder="שם בעברית (למשל: דודה שרה)" 
-            value={newHeb} onChange={e => setNewHeb(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
-          />
-          <select 
-            value={newCat} onChange={e => setNewCat(e.target.value)} 
-            style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem', marginTop: '5px'}}
-          >
-            {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button>
-          
-          <div style={localStyles.wordList}>
-            {customWords.map((w, i) => (
-              <span key={i} style={localStyles.wordTag}>{w.word}</span>
-            ))}
+          {/* כותרת מתקפלת עם כפתור פלוס */}
+          <div style={localStyles.accordionHeader} onClick={() => setIsExpanded(!isExpanded)}>
+            <label style={{...localStyles.label, cursor: 'pointer', marginBottom: 0}}>
+              הוספת מפורסמים לחבילה <span style={localStyles.goldText}>(לא חובה)</span>
+            </label>
+            <span style={localStyles.plusSign}>{isExpanded ? "−" : "+"}</span>
           </div>
+
+          {/* תוכן שמופיע רק כשהתפריט פתוח */}
+          {isExpanded && (
+            <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
+              <input 
+                placeholder="שם בעברית (למשל: דודה שרה)" 
+                value={newHeb} onChange={e => setNewHeb(e.target.value)} 
+                style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
+              />
+              <select 
+                value={newCat} onChange={e => setNewCat(e.target.value)} 
+                style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}}
+              >
+                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <button onClick={handleAddWord} style={localStyles.addBtn}>+ הוסף שם</button>
+              
+              <div style={localStyles.wordList}>
+                {customWords.map((w, i) => (
+                  <span key={i} style={localStyles.wordTag}>{w.word}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{...localStyles.inputGroup, marginTop: '10px'}}>
@@ -128,7 +152,6 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
             style={{...localStyles.entryInput, borderStyle: 'dashed'}} 
           />
           <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button>
-          {/* חיווי למשתמש שהקוד זוהה בהצלחה */}
           {initialCode && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '5px' }}>כניסה אוטומטית לחדר: {inputCode}</p>}
         </div>
       </div>
