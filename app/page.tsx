@@ -15,13 +15,14 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
-  // רפרנס לשמירת נעילת המסך
-  const wakeLockRef = useRef<any>(null);
+  // מונים מקומיים לסנכרון מושלם
+  const [localTimeLeft, setLocalTimeLeft] = useState(0);
+  const [localCountdown, setLocalCountdown] = useState(0);
 
+  const wakeLockRef = useRef<any>(null);
   const roomDataRef = useRef(roomData);
   useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
 
-  // פונקציה לבקשת נעילת מסך (מניעת החשכה)
   const requestWakeLock = async () => {
     if ('wakeLock' in navigator) {
       try {
@@ -32,21 +33,16 @@ export default function FamilyAliasApp() {
     }
   };
 
-  // ניהול נעילת המסך בהתאם לשלב המשחק ולנראות הדף
   useEffect(() => {
-    // הפעלת הנעילה אם המשחק בשלב פעיל (שלב 4 ומעלה)
     if (roomId && step >= 4) {
       requestWakeLock();
     }
-
     const handleVisibilityChange = async () => {
       if (wakeLockRef.current !== null && document.visibilityState === 'visible') {
         await requestWakeLock();
       }
     };
-
     document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       if (wakeLockRef.current) {
@@ -67,38 +63,43 @@ export default function FamilyAliasApp() {
   const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
 
+  // לוגיקת סנכרון טיימר משחק (Step 5)
   useEffect(() => {
-    if (!roomId || !roomData || !currentP || roomData.isPaused || step < 4 || step === 8) return;
-    const isBot = currentP?.id?.startsWith('d_');
-    const isHost = roomData.players?.[0]?.id === userId;
-    
-    const shouldRunTimer = isIDescriber || (isBot && isHost) || (roomId === "עומר");
-    if (!shouldRunTimer) return;
+    if (!roomData?.timerEndsAt || roomData.isPaused || step !== 5) return;
 
     const interval = setInterval(() => {
-      const liveData = roomDataRef.current;
-      if (!liveData || liveData.isPaused) return;
+      const now = Date.now();
+      const diff = Math.max(0, Math.ceil((roomData.timerEndsAt - now) / 1000));
+      setLocalTimeLeft(diff);
 
-      if (step === 4) {
-        if (liveData.preGameTimer > 0) updateRoom({ preGameTimer: liveData.preGameTimer - 1 });
-        else {
-          let nextTimeLimit;
-          if (roomId === "עומר") {
-            nextTimeLimit = 5;
-          } else {
-            nextTimeLimit = liveData.currentPhase === 'A' ? 30 : 60;
-          }
-          updateRoom({ step: 5, timeLeft: nextTimeLimit, roundScore: 0 }); 
-        }
-      } else if (step === 5) {
-        if (liveData.timeLeft > 0) updateRoom({ timeLeft: liveData.timeLeft - 1 });
-        else {
-          updateRoom({ step: 6, phaseEnded: null });
-        }
+      if (diff === 0 && isIDescriber) {
+        updateRoom({ step: 6, phaseEnded: null });
       }
-    }, 1000);
+    }, 100); // בדיקה מהירה לחוויה חלקה, אך העדכון הוא מקומי בלבד
     return () => clearInterval(interval);
-  }, [step, roomId, isIDescriber, userId, updateRoom]);
+  }, [roomData?.timerEndsAt, roomData?.isPaused, step, isIDescriber, updateRoom]);
+
+  // לוגיקת סנכרון ספירה לאחור (Step 4)
+  useEffect(() => {
+    if (!roomData?.countdownEndsAt || step !== 4) return;
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const diff = Math.max(0, Math.ceil((roomData.countdownEndsAt - now) / 1000));
+      setLocalCountdown(diff);
+
+      if (diff === 0 && isIDescriber) {
+        let duration = roomData.currentPhase === 'A' ? 30 : 60;
+        if (roomId === "עומר") duration = 5;
+        updateRoom({ 
+          step: 5, 
+          timerEndsAt: Date.now() + (duration * 1000), 
+          roundScore: 0 
+        });
+      }
+    }, 100);
+    return () => clearInterval(interval);
+  }, [roomData?.countdownEndsAt, step, isIDescriber, roomId, roomData?.currentPhase, updateRoom]);
 
   if (!mounted) return null;
 
@@ -126,7 +127,6 @@ export default function FamilyAliasApp() {
     if (roomData.currentPhase === 'A') {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
-      
       const updates: any = {
         [`totalScores.${describerTeam}`]: increment(1),
         [`totalScores.${targetName}`]: increment(1),
@@ -134,7 +134,6 @@ export default function FamilyAliasApp() {
         roundScore: increment(1),
         gameDeck: updatedDeck
       };
-
       if (updatedDeck.length >= nPlayers * 5) {
         Object.assign(updates, { 
           poolIndex: 0, 
@@ -151,7 +150,6 @@ export default function FamilyAliasApp() {
         roundScore: increment(points),
         poolIndex: increment(1)
       };
-
       if ((roomData.poolIndex + 1) >= pool.length) {
         if (roomData.currentPhase === 'B') {
           updateRoom({ 
@@ -177,16 +175,8 @@ export default function FamilyAliasApp() {
 
   return (
     <div style={{ 
-      backgroundColor: '#05081c', 
-      height: '100dvh', 
-      color: 'white', 
-      direction: 'rtl', 
-      overscrollBehavior: 'none', 
-      overflow: 'hidden',
-      // ביטול בחירת טקסט בכל המשחק
-      userSelect: 'none',
-      WebkitUserSelect: 'none',
-      MozUserSelect: 'none'
+      backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', 
+      overscrollBehavior: 'none', overflow: 'hidden', userSelect: 'none', WebkitUserSelect: 'none'
     }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
       {step === 1 && <EntryStep initialCode={urlRoomId} onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
@@ -201,7 +191,11 @@ export default function FamilyAliasApp() {
               onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
               editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
               onStart={() => {
-                const updates: any = { step: 4, preGameTimer: 3, poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] };
+                const updates: any = { 
+                  step: 4, 
+                  countdownEndsAt: Date.now() + 3000, 
+                  poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] 
+                };
                 if (roomId === "עומר" && (!roomData.shuffledPools || roomData.shuffledPools.length === 0)) {
                   const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
                   updates.shuffledPools = getInitialShuffledPools(allCustom);
@@ -213,13 +207,13 @@ export default function FamilyAliasApp() {
           )}
           {step === 4 && currentP && (
             <CountdownStep 
-              timer={roomData.preGameTimer} 
+              timer={localCountdown} 
               turnInfo={{name: currentP.name, team: roomData.teamNames[currentP.teamIdx]}} 
               isTeamMode={true} 
               currentPhase={roomData.currentPhase} 
             />
           )}
-          {step === 5 && <GameStep roomData={roomData} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
+          {step === 5 && <GameStep roomData={{...roomData, timeLeft: localTimeLeft}} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
           {step === 6 && (
             <ScoreStep 
               scores={roomData.totalScores} 
@@ -238,16 +232,21 @@ export default function FamilyAliasApp() {
                 const globalIdx = roomData.players.findIndex((p: any) => p.id === nextPlayer.id);
                 const nextScore = Number(roomData.totalScores[roomData.teamNames[nextTeamIdx]] || 0);
 
+                const baseUpdate = { 
+                  currentTurnIdx: globalIdx, currentTeamIdx: nextTeamIdx, teamPlayerIndices, 
+                  countdownEndsAt: Date.now() + 3000, roundScore: 0, phaseEnded: null 
+                };
+
                 if (roomData.currentPhase !== 'A' && nextScore > 0 && nextScore % 7 === 0) {
-                  updateRoom({ step: 8, currentTurnIdx: globalIdx, currentTeamIdx: nextTeamIdx, teamPlayerIndices, roundScore: 0, phaseEnded: null });
+                  updateRoom({ ...baseUpdate, step: 8 });
                 } else {
-                  updateRoom({ step: 4, currentTurnIdx: globalIdx, currentTeamIdx: nextTeamIdx, teamPlayerIndices, preGameTimer: 3, roundScore: 0, phaseEnded: null });
+                  updateRoom({ ...baseUpdate, step: 4 });
                 }
               }} 
             />
           )}
           {step === 7 && <VictoryStep winnerName={Object.keys(roomData.totalScores).reduce((a, b) => roomData.totalScores[a] > roomData.totalScores[b] ? a : b)} onRestart={handleFullReset} />}
-          {step === 8 && <SevenBoomStep roomData={roomData} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
+          {step === 8 && <SevenBoomStep roomData={{...roomData, timeLeft: localTimeLeft}} userId={userId!} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
         </>
       )}
     </div>

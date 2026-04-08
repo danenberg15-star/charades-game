@@ -57,10 +57,10 @@ export function useGameState() {
       gameMode: "team", difficulty: "easy", numTeams: 2,
       players: [{ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }],
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
-      totalScores: {}, roundScore: 0, timeLeft: 5, 
+      totalScores: {}, roundScore: 0, 
       isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
-      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, // אינדקסים לכל קבוצה
-      currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
+      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
+      currentPhase: 'A', poolIndex: 0, shuffledPools: [], gameDeck: []
     });
     localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
     setRoomId(id); setStep(3);
@@ -80,9 +80,9 @@ export function useGameState() {
               id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
               gameMode: "team", numTeams: 2, difficulty: "easy", 
               players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
-              timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
+              isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
               teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-              preGameTimer: 3, shuffledPools: [], gameDeck: [] 
+              shuffledPools: [], gameDeck: [] 
             });
             targetStep = 3; return; 
           } else { throw new Error("ROOM_NOT_FOUND"); }
