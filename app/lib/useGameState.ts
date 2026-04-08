@@ -59,7 +59,7 @@ export function useGameState() {
       teamNames: ["קבוצה א'", "קבוצה ב'", "קבוצה ג'", "קבוצה ד'"],
       totalScores: {}, roundScore: 0, timeLeft: 5, 
       isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
-      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
+      teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, // אינדקסים לכל קבוצה
       currentPhase: 'A', poolIndex: 0, preGameTimer: 3, shuffledPools: [], gameDeck: []
     });
     localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
@@ -82,9 +82,7 @@ export function useGameState() {
               players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
               timeLeft: 5, isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
               teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
-              preGameTimer: 3, 
-              shuffledPools: [], // ריק לכניסה מיידית
-              gameDeck: [] 
+              preGameTimer: 3, shuffledPools: [], gameDeck: [] 
             });
             targetStep = 3; return; 
           } else { throw new Error("ROOM_NOT_FOUND"); }

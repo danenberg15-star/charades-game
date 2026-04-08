@@ -44,7 +44,6 @@ export default function FamilyAliasApp() {
       if (step === 4) {
         if (liveData.preGameTimer > 0) updateRoom({ preGameTimer: liveData.preGameTimer - 1 });
         else {
-          // הגדרת זמן הסיבוב: 5 שניות לחדר עומר, אחרת לפי השלב (30 לשלב א', 60 לאחרים)
           let nextTimeLimit;
           if (roomId === "עומר") {
             nextTimeLimit = 5;
@@ -178,11 +177,22 @@ export default function FamilyAliasApp() {
               entities={roomData.teamNames.slice(0, roomData.numTeams)} 
               phaseEnded={roomData.phaseEnded} 
               onNextRound={() => {
+                // 1. קביעת הקבוצה הבאה בתור (סבב קבוצות)
                 const nextTeamIdx = (roomData.currentTeamIdx + 1) % roomData.numTeams;
                 const teamPlayerIndices = { ...roomData.teamPlayerIndices };
+                
+                // 2. קידום המונה הפנימי של הקבוצה שסיימה עכשיו את התור
                 teamPlayerIndices[roomData.currentTeamIdx] = (teamPlayerIndices[roomData.currentTeamIdx] + 1);
-                const playersInNextTeam = roomData.players.filter((p: any) => p.teamIdx === nextTeamIdx);
+                
+                // 3. יצירת רשימת השחקנים של הקבוצה הבאה, ממוינת דטרמיניסטית לפי ID (מבטיח סדר קבוע)
+                const playersInNextTeam = roomData.players
+                  .filter((p: any) => p.teamIdx === nextTeamIdx)
+                  .sort((a: any, b: any) => a.id.localeCompare(b.id));
+
+                // 4. בחירת השחקן הבא מתוך הרשימה הממוינת לפי המונה שלו
                 const nextPlayer = playersInNextTeam[teamPlayerIndices[nextTeamIdx] % playersInNextTeam.length];
+                
+                // 5. מציאת האינדקס הגלובלי במערך השחקנים המקורי
                 const globalIdx = roomData.players.findIndex((p: any) => p.id === nextPlayer.id);
                 const nextScore = Number(roomData.totalScores[roomData.teamNames[nextTeamIdx]] || 0);
 
