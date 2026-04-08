@@ -176,7 +176,18 @@ export default function FamilyAliasApp() {
     : [roomData?.teamNames[currentP?.teamIdx]];
 
   return (
-    <div style={{ backgroundColor: '#05081c', height: '100dvh', color: 'white', direction: 'rtl', overscrollBehavior: 'none', overflow: 'hidden' }}>
+    <div style={{ 
+      backgroundColor: '#05081c', 
+      height: '100dvh', 
+      color: 'white', 
+      direction: 'rtl', 
+      overscrollBehavior: 'none', 
+      overflow: 'hidden',
+      // ביטול בחירת טקסט בכל המשחק
+      userSelect: 'none',
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none'
+    }}>
       {step === 0 && <RulesStep onStart={() => setStep(1)} />}
       {step === 1 && <EntryStep initialCode={urlRoomId} onJoin={handleJoinRoom} onCreate={handleCreateRoom} onSetName={setUserName} />}
       {roomData && (
