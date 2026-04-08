@@ -15,8 +15,46 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
+  // רפרנס לשמירת נעילת המסך
+  const wakeLockRef = useRef<any>(null);
+
   const roomDataRef = useRef(roomData);
   useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
+
+  // פונקציה לבקשת נעילת מסך (מניעת החשכה)
+  const requestWakeLock = async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+      } catch (err: any) {
+        console.error(`Wake Lock Error: ${err.name}, ${err.message}`);
+      }
+    }
+  };
+
+  // ניהול נעילת המסך בהתאם לשלב המשחק ולנראות הדף
+  useEffect(() => {
+    // הפעלת הנעילה אם המשחק בשלב פעיל (שלב 4 ומעלה)
+    if (roomId && step >= 4) {
+      requestWakeLock();
+    }
+
+    const handleVisibilityChange = async () => {
+      if (wakeLockRef.current !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release();
+        wakeLockRef.current = null;
+      }
+    };
+  }, [roomId, step]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -177,22 +215,15 @@ export default function FamilyAliasApp() {
               entities={roomData.teamNames.slice(0, roomData.numTeams)} 
               phaseEnded={roomData.phaseEnded} 
               onNextRound={() => {
-                // 1. קביעת הקבוצה הבאה בתור (סבב קבוצות)
                 const nextTeamIdx = (roomData.currentTeamIdx + 1) % roomData.numTeams;
                 const teamPlayerIndices = { ...roomData.teamPlayerIndices };
-                
-                // 2. קידום המונה הפנימי של הקבוצה שסיימה עכשיו את התור
                 teamPlayerIndices[roomData.currentTeamIdx] = (teamPlayerIndices[roomData.currentTeamIdx] + 1);
                 
-                // 3. יצירת רשימת השחקנים של הקבוצה הבאה, ממוינת דטרמיניסטית לפי ID (מבטיח סדר קבוע)
                 const playersInNextTeam = roomData.players
                   .filter((p: any) => p.teamIdx === nextTeamIdx)
                   .sort((a: any, b: any) => a.id.localeCompare(b.id));
 
-                // 4. בחירת השחקן הבא מתוך הרשימה הממוינת לפי המונה שלו
                 const nextPlayer = playersInNextTeam[teamPlayerIndices[nextTeamIdx] % playersInNextTeam.length];
-                
-                // 5. מציאת האינדקס הגלובלי במערך השחקנים המקורי
                 const globalIdx = roomData.players.findIndex((p: any) => p.id === nextPlayer.id);
                 const nextScore = Number(roomData.totalScores[roomData.teamNames[nextTeamIdx]] || 0);
 
