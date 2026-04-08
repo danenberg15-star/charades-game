@@ -23,15 +23,12 @@ const localStyles: { [key: string]: CSSProperties } = {
     border: '1px dashed rgba(0, 242, 255, 0.4)', display: 'flex', flexDirection: 'column', gap: '10px',
     transition: 'all 0.3s ease'
   },
-  // סגנון חדש לכותרת המתקפלת
   accordionHeader: {
     display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', width: '100%'
   },
-  // סגנון לכפתור הפלוס
   plusSign: {
     color: '#00f2ff', fontSize: '1.8rem', fontWeight: '900', marginLeft: '5px'
   },
-  // טקסט "לא חובה" בזהב
   goldText: {
     color: '#FFD700', fontWeight: 'bold'
   },
@@ -69,7 +66,7 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
   const [name, setName] = useState("");
   const [inputCode, setInputCode] = useState(initialCode || "");
   const [customWords, setCustomWords] = useState<any[]>([]);
-  const [isExpanded, setIsExpanded] = useState(false); // התפריט סגור כברירת מחדל
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const [newHeb, setNewHeb] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
@@ -96,7 +93,14 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
   return (
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
-        <img src="/icon.jpg" alt="SAME-SAME Logo" style={localStyles.entryLogo} />
+        {/* אופטימיזציית טעינה: Priority ו-Eager */}
+        <img 
+          src="/icon.jpg" 
+          alt="SAME-SAME Logo" 
+          style={localStyles.entryLogo} 
+          fetchPriority="high"
+          loading="eager"
+        />
       </div>
 
       <div style={localStyles.formSection}>
@@ -111,7 +115,6 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
         </div>
 
         <div style={localStyles.customBox}>
-          {/* כותרת מתקפלת עם כפתור פלוס */}
           <div style={localStyles.accordionHeader} onClick={() => setIsExpanded(!isExpanded)}>
             <label style={{...localStyles.label, cursor: 'pointer', marginBottom: 0}}>
               הוספת מפורסמים לחבילה <span style={localStyles.goldText}>(לא חובה)</span>
@@ -119,7 +122,6 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
             <span style={localStyles.plusSign}>{isExpanded ? "−" : "+"}</span>
           </div>
 
-          {/* תוכן שמופיע רק כשהתפריט פתוח */}
           {isExpanded && (
             <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
               <input 

@@ -52,7 +52,7 @@ export function useGameState() {
 
   const handleCreateRoom = async (payload: { name: string, customWords: any[] }) => {
     const id = generateRoomCode();
-    await setDoc(doc(db, "rooms", id), {
+    const data = {
       id, step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
       gameMode: "team", difficulty: "easy", numTeams: 2,
       players: [{ id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }],
@@ -61,7 +61,10 @@ export function useGameState() {
       isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0,
       teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
       currentPhase: 'A', poolIndex: 0, shuffledPools: [], gameDeck: []
-    });
+    };
+    await setDoc(doc(db, "rooms", id), data);
+    // אופטימיזציה: עדכון State מקומי מיד כדי לחסוך את הדיליי של השרת
+    setRoomData(data);
     localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
     setRoomId(id); setStep(3);
   };
@@ -70,23 +73,29 @@ export function useGameState() {
     const id = idInput.toUpperCase();
     try {
       let targetStep = 0;
+      let finalData: any = null;
+
       await runTransaction(db, async (transaction) => {
         const roomRef = doc(db, "rooms", id);
         const snap = await transaction.get(roomRef);
+        
         if (!snap.exists()) {
           if (id === "עומר") {
             const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
-            transaction.set(roomRef, { 
+            finalData = { 
               id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
               gameMode: "team", numTeams: 2, difficulty: "easy", 
               players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
               isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
               teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }, currentPhase: 'A', poolIndex: 0, 
               shuffledPools: [], gameDeck: [] 
-            });
-            targetStep = 3; return; 
+            };
+            transaction.set(roomRef, finalData);
+            targetStep = 3; 
+            return; 
           } else { throw new Error("ROOM_NOT_FOUND"); }
         }
+
         const data = snap.data();
         targetStep = data.step;
         if (data.step === 3) {
@@ -98,9 +107,15 @@ export function useGameState() {
           } else {
             updatedPlayers = [...currentPlayers, { id: userId, name: payload.name, teamIdx: 0, customWords: payload.customWords }];
           }
+          finalData = { ...data, players: updatedPlayers, lastActivity: Date.now() };
           transaction.update(roomRef, { players: updatedPlayers, lastActivity: Date.now() });
+        } else {
+          finalData = data;
         }
       });
+
+      // אופטימיזציה: עדכון הנתונים מקומית מיד לאחר הצלחת הטרנזקציה למעבר חלק
+      if (finalData) setRoomData(finalData);
       localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name || "עומר");
       setRoomId(id); setStep(targetStep); 
     } catch (error: any) {
