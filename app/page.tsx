@@ -62,6 +62,12 @@ export default function FamilyAliasApp() {
 
   const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
+  
+  // זיהוי אם התור הנוכחי הוא של בוט ואם המשתמש המקומי הוא המארח (Host)
+  const isBot = currentP?.id?.startsWith('d_');
+  const isHost = roomData?.players?.[0]?.id === userId;
+  // הרשאה להעברת שלבים: רק המסביר, או המארח אם זה תור של בוט
+  const canTriggerTransition = isIDescriber || (isBot && isHost);
 
   // לוגיקת סנכרון טיימר משחק (Step 5)
   useEffect(() => {
@@ -72,12 +78,12 @@ export default function FamilyAliasApp() {
       const diff = Math.max(0, Math.ceil((roomData.timerEndsAt - now) / 1000));
       setLocalTimeLeft(diff);
 
-      if (diff === 0 && isIDescriber) {
+      if (diff === 0 && canTriggerTransition) {
         updateRoom({ step: 6, phaseEnded: null });
       }
-    }, 100); // בדיקה מהירה לחוויה חלקה, אך העדכון הוא מקומי בלבד
+    }, 100); 
     return () => clearInterval(interval);
-  }, [roomData?.timerEndsAt, roomData?.isPaused, step, isIDescriber, updateRoom]);
+  }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom]);
 
   // לוגיקת סנכרון ספירה לאחור (Step 4)
   useEffect(() => {
@@ -88,7 +94,7 @@ export default function FamilyAliasApp() {
       const diff = Math.max(0, Math.ceil((roomData.countdownEndsAt - now) / 1000));
       setLocalCountdown(diff);
 
-      if (diff === 0 && isIDescriber) {
+      if (diff === 0 && canTriggerTransition) {
         let duration = roomData.currentPhase === 'A' ? 30 : 60;
         if (roomId === "עומר") duration = 5;
         updateRoom({ 
@@ -99,7 +105,7 @@ export default function FamilyAliasApp() {
       }
     }, 100);
     return () => clearInterval(interval);
-  }, [roomData?.countdownEndsAt, step, isIDescriber, roomId, roomData?.currentPhase, updateRoom]);
+  }, [roomData?.countdownEndsAt, step, canTriggerTransition, roomId, roomData?.currentPhase, updateRoom]);
 
   if (!mounted) return null;
 
