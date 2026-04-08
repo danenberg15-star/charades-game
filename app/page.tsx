@@ -217,6 +217,7 @@ export default function FamilyAliasApp() {
               turnInfo={{name: currentP.name, team: roomData.teamNames[currentP.teamIdx]}} 
               isTeamMode={true} 
               currentPhase={roomData.currentPhase} 
+              onExit={handleFullReset}
             />
           )}
           {step === 5 && <GameStep roomData={{...roomData, timeLeft: localTimeLeft}} userId={userId!} targets={gameTargets} updateRoom={updateRoom} handleAction={handleScoreAction} onExit={handleFullReset} />}
@@ -224,7 +225,8 @@ export default function FamilyAliasApp() {
             <ScoreStep 
               scores={roomData.totalScores} 
               entities={roomData.teamNames.slice(0, roomData.numTeams)} 
-              phaseEnded={roomData.phaseEnded} 
+              phaseEnded={roomData.phaseEnded}
+              onExit={handleFullReset} 
               onNextRound={() => {
                 const nextTeamIdx = (roomData.currentTeamIdx + 1) % roomData.numTeams;
                 const teamPlayerIndices = { ...roomData.teamPlayerIndices };

@@ -8,9 +8,10 @@ interface CountdownStepProps {
   turnInfo: { name: string; team: string };
   isTeamMode: boolean;
   currentPhase: 'A' | 'B' | 'C';
+  onExit: () => void; // הוספנו את ההגדרה כאן
 }
 
-export default function CountdownStep({ timer, turnInfo, isTeamMode, currentPhase }: CountdownStepProps) {
+export default function CountdownStep({ timer, turnInfo, isTeamMode, currentPhase, onExit }: CountdownStepProps) {
   const getPhaseRule = () => {
     switch(currentPhase) {
       case 'A': return "שלב א: ניתן להיעזר בפנטומימה ומילים";
@@ -20,8 +21,17 @@ export default function CountdownStep({ timer, turnInfo, isTeamMode, currentPhas
     }
   };
 
+  const exitBtnStyle: React.CSSProperties = {
+    position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px',
+    borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+    border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer',
+    zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
+  };
+
   return (
-    <div style={{...styles.flexLayout, height: '100dvh', justifyContent: 'center', direction: 'rtl'}}>
+    <div style={{...styles.flexLayout, height: '100dvh', justifyContent: 'center', direction: 'rtl', position: 'relative'}}>
+      <button onClick={onExit} style={exitBtnStyle}>✕</button>
+      
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
         <div style={{ fontSize: '24px', color: '#64748b', marginBottom: '10px' }}>מתחילים בעוד...</div>
         <div style={{ fontSize: '110px', fontWeight: '900', color: '#00f2ff', lineHeight: '1' }}>{timer}</div>

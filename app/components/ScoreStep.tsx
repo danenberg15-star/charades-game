@@ -9,11 +9,20 @@ interface ScoreStepProps {
   entities: string[];
   phaseEnded?: string | null;
   onNextRound: () => void;
+  onExit: () => void; // הוספנו את ההגדרה כאן
 }
 
-export default function ScoreStep({ scores, entities, phaseEnded, onNextRound }: ScoreStepProps) {
+export default function ScoreStep({ scores, entities, phaseEnded, onNextRound, onExit }: ScoreStepProps) {
+  const exitBtnStyle: React.CSSProperties = {
+    position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px',
+    borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444',
+    border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer',
+    zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center'
+  };
+
   return (
-    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '40px', padding: '20px', boxSizing: 'border-box', overflowY: 'auto'}}>
+    <div style={{...styles.flexLayout, justifyContent: 'flex-start', paddingTop: '40px', padding: '20px', boxSizing: 'border-box', overflowY: 'auto', position: 'relative'}}>
+      <button onClick={onExit} style={exitBtnStyle}>✕</button>
       <Logo />
       
       {phaseEnded && (

@@ -49,6 +49,7 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
   if (showExplanation) {
     return (
       <div style={{...s.layout, justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
+        <button onClick={onExit} style={s.exitBtn}>✕</button>
         <div style={{...s.pauseBox, height: 'auto', padding: '40px 20px', maxWidth: '400px'}}>
           <h1 style={{ color: '#00f2ff', fontSize: '3.5rem', fontWeight: '900', marginBottom: '20px' }}>7 בום! 💣</h1>
           <div style={{ color: 'white', fontSize: '1.3rem', lineHeight: '1.6', marginBottom: '30px' }}>
@@ -64,10 +65,11 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
 
   return (
     <div style={s.layout}>
+      <button onClick={onExit} style={s.exitBtn}>✕</button>
+      
       <div style={s.header}>
         <div style={s.scoreBox}>🏆 {myDisplayScore}</div>
         <div style={{...s.timer, color: '#00f2ff', fontSize: '1.6rem', width: 'max-content'}}>מילה {wordsCount + 1} מתוך 7</div>
-        <button onClick={onExit} style={s.icon}>✕</button>
       </div>
       
       {isIDescriber && (
@@ -112,11 +114,11 @@ export default function SevenBoomStep({ roomData, userId, updateRoom, handleActi
 }
 
 const s: any = {
-  layout: { display: 'flex', flexDirection: 'column', height: '100%', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl' },
+  layout: { display: 'flex', flexDirection: 'column', height: '100%', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl', position: 'relative' },
+  exitBtn: { position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '70px', position: 'relative' },
   scoreBox: { backgroundColor: 'rgba(0, 242, 255, 0.15)', padding: '8px 15px', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', fontSize: '1.2rem' },
   timer: { fontSize: '2rem', fontWeight: '900', color: '#00f2ff' },
-  icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem' },
   skip: { width: '100%', minHeight: '55px', border: '2px dashed #ef4444', borderRadius: '15px', color: '#ef4444', fontWeight: 'bold', background: 'none', cursor: 'pointer' },
   center: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   card: { width: '100%', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '1px solid rgba(0, 242, 255, 0.1)' },
