@@ -95,7 +95,7 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
       <div style={localStyles.topSection}>
         {/* אופטימיזציית טעינה: Priority ו-Eager */}
         <img 
-          src="/icon.jpg" 
+          src="/icon.wepb" 
           alt="SAME-SAME Logo" 
           style={localStyles.entryLogo} 
           fetchPriority="high"
