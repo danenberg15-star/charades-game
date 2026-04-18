@@ -81,6 +81,7 @@ export default function FamilyAliasApp() {
   const isHost = roomData?.players?.[0]?.id === userId;
   const canTriggerTransition = isIDescriber || (isBot && isHost);
 
+  // לוגיקת סנכרון טיימר משחק עם הסטת מילה בסיום תור
   useEffect(() => {
     if (!roomData?.timerEndsAt || roomData.isPaused || step !== 5) return;
 
@@ -90,11 +91,28 @@ export default function FamilyAliasApp() {
       setLocalTimeLeft(diff);
 
       if (diff === 0 && canTriggerTransition) {
-        updateRoom({ step: 6, phaseEnded: null });
+        const updates: any = { step: 6, phaseEnded: null };
+        
+        const pool = [...(roomData.shuffledPools || [])];
+        if (pool.length > 0) {
+          if (roomData.currentPhase === 'A') {
+            updates.poolIndex = increment(1);
+          } else {
+            // בשלבים ב' ו-ג': דחיפת המילה לסוף אם היא לא המילה האחרונה בחפיסה
+            if (roomData.poolIndex < pool.length - 1) {
+              const currentWord = pool[roomData.poolIndex];
+              pool.splice(roomData.poolIndex, 1);
+              pool.push(currentWord);
+              updates.shuffledPools = pool;
+            }
+          }
+        }
+        
+        updateRoom(updates);
       }
     }, 100); 
     return () => clearInterval(interval);
-  }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom]);
+  }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom, roomData?.shuffledPools, roomData?.poolIndex, roomData?.currentPhase]);
 
   useEffect(() => {
     if (!roomData?.countdownEndsAt || step !== 4) return;
@@ -207,7 +225,6 @@ export default function FamilyAliasApp() {
               onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
               editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
               onStart={() => {
-                // תיקון קריטי: מציאת השחקן הראשון של קבוצה א' ואיפוס מוחלט של פנקס התורות
                 const playersInTeam0 = roomData.players
                   .filter((p: any) => p.teamIdx === 0)
                   .sort((a: any, b: any) => a.id.localeCompare(b.id));
@@ -222,7 +239,6 @@ export default function FamilyAliasApp() {
                   roundScore: 0, 
                   currentPhase: 'A', 
                   gameDeck: [],
-                  // איפוס קשיח שמבטיח שקבוצה א' תמיד מתחילה בלי לדלג על אף אחד
                   currentTeamIdx: 0,
                   currentTurnIdx: firstGlobalIdx,
                   teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }
