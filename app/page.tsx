@@ -15,7 +15,6 @@ export default function FamilyAliasApp() {
   const { mounted, userId, roomId, roomData, step, setStep, updateRoom, handleFullReset, handleCreateRoom, handleJoinRoom, setUserName, increment } = useGameState();
   const [urlRoomId, setUrlRoomId] = useState<string | null>(null);
 
-  // מונים מקומיים לסנכרון מושלם
   const [localTimeLeft, setLocalTimeLeft] = useState(0);
   const [localCountdown, setLocalCountdown] = useState(0);
 
@@ -23,7 +22,6 @@ export default function FamilyAliasApp() {
   const roomDataRef = useRef(roomData);
   useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
 
-  // פונקציה משופרת לבקשת השארת המסך דולק
   const requestWakeLock = async () => {
     if ('wakeLock' in navigator) {
       try {
@@ -49,7 +47,6 @@ export default function FamilyAliasApp() {
       }
     };
 
-    // הטריק לאייפון: ניצול כל נגיעה במסך כדי לחדש את ה-Wake Lock עם הרשאות משתמש
     const handleUserInteraction = () => {
       requestWakeLock();
     };
@@ -80,13 +77,10 @@ export default function FamilyAliasApp() {
   const currentP = roomData?.players && roomData?.currentTurnIdx !== undefined ? roomData.players[roomData.currentTurnIdx] : null;
   const isIDescriber = currentP?.id === userId;
   
-  // זיהוי אם התור הנוכחי הוא של בוט ואם המשתמש המקומי הוא המארח (Host)
   const isBot = currentP?.id?.startsWith('d_');
   const isHost = roomData?.players?.[0]?.id === userId;
-  // הרשאה להעברת שלבים: רק המסביר, או המארח אם זה תור של בוט
   const canTriggerTransition = isIDescriber || (isBot && isHost);
 
-  // לוגיקת סנכרון טיימר משחק (Step 5)
   useEffect(() => {
     if (!roomData?.timerEndsAt || roomData.isPaused || step !== 5) return;
 
@@ -102,7 +96,6 @@ export default function FamilyAliasApp() {
     return () => clearInterval(interval);
   }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom]);
 
-  // לוגיקת סנכרון ספירה לאחור (Step 4)
   useEffect(() => {
     if (!roomData?.countdownEndsAt || step !== 4) return;
 
@@ -113,7 +106,7 @@ export default function FamilyAliasApp() {
 
       if (diff === 0 && canTriggerTransition) {
         let duration = roomData.currentPhase === 'A' ? 30 : 60;
-        if (roomId === "עומר") duration = 5; // שמירה על הטיימר המהיר בחדר הבדיקות
+        if (roomId === "עומר") duration = 5; 
         updateRoom({ 
           step: 5, 
           timerEndsAt: Date.now() + (duration * 1000), 
@@ -214,10 +207,25 @@ export default function FamilyAliasApp() {
               onPlayerMove={(pId, tIdx) => updateRoom({ players: roomData.players.map((pl: any) => pl.id === pId ? {...pl, teamIdx: tIdx} : pl) })} 
               editTeamName={(idx: number) => { const n = prompt("שם קבוצה:", roomData.teamNames[idx]); if(n) { const t = [...roomData.teamNames]; t[idx] = n; updateRoom({ teamNames: t }); } }} 
               onStart={() => {
+                // תיקון קריטי: מציאת השחקן הראשון של קבוצה א' ואיפוס מוחלט של פנקס התורות
+                const playersInTeam0 = roomData.players
+                  .filter((p: any) => p.teamIdx === 0)
+                  .sort((a: any, b: any) => a.id.localeCompare(b.id));
+
+                const firstPlayer = playersInTeam0[0] || roomData.players[0]; 
+                const firstGlobalIdx = roomData.players.findIndex((p: any) => p.id === firstPlayer.id);
+
                 const updates: any = { 
                   step: 4, 
                   countdownEndsAt: Date.now() + 3000, 
-                  poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] 
+                  poolIndex: 0, 
+                  roundScore: 0, 
+                  currentPhase: 'A', 
+                  gameDeck: [],
+                  // איפוס קשיח שמבטיח שקבוצה א' תמיד מתחילה בלי לדלג על אף אחד
+                  currentTeamIdx: 0,
+                  currentTurnIdx: firstGlobalIdx,
+                  teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }
                 };
                 
                 if (!roomData.shuffledPools || roomData.shuffledPools.length === 0) {
