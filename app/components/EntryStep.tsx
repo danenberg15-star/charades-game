@@ -64,15 +64,18 @@ const CATEGORIES = [
 
 export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: any) {
   const [name, setName] = useState("");
-  const [inputCode, setInputCode] = useState(initialCode || "");
+  const [inputCode, setInputCode] = useState("");
   const [customWords, setCustomWords] = useState<any[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
   
   const [newHeb, setNewHeb] = useState("");
   const [newCat, setNewCat] = useState(CATEGORIES[0]);
 
+  // עדכון קוד החדר מתוך ה-URL אם קיים
   useEffect(() => {
-    if (initialCode) setInputCode(initialCode);
+    if (initialCode) {
+      setInputCode(initialCode);
+    }
   }, [initialCode]);
 
   const handleAddWord = () => {
@@ -83,19 +86,22 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
 
   const startAction = (type: 'create' | 'join') => {
     if (!name.trim()) return alert("נא להזין שם שחקן");
-    if (type === 'join' && !inputCode.trim()) return alert("נא להזין קוד חדר");
     
     const payload = { name: name.trim(), customWords };
-    if (type === 'create') onCreate(payload);
-    else onJoin(inputCode.trim(), payload);
+    if (type === 'create') {
+      onCreate(payload);
+    } else {
+      const codeToJoin = inputCode.trim();
+      if (!codeToJoin) return alert("נא להזין קוד חדר");
+      onJoin(codeToJoin, payload);
+    }
   };
 
   return (
     <div style={localStyles.flexLayout}>
       <div style={localStyles.topSection}>
-        {/* אופטימיזציית טעינה: Priority ו-Eager */}
         <img 
-          src="/icon.webp" 
+          src="/icon.jpg" 
           alt="SAME-SAME Logo" 
           style={localStyles.entryLogo} 
           fetchPriority="high"
@@ -107,7 +113,8 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
         <div style={localStyles.inputGroup}>
           <label style={localStyles.label}>השם שלך:</label>
           <input 
-            type="text" value={name} 
+            type="text" 
+            value={name} 
             onChange={(e) => { setName(e.target.value); onSetName(e.target.value); }} 
             placeholder="איך יקראו לך במשחק?" 
             style={localStyles.entryInput} 
@@ -126,11 +133,13 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
             <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px'}}>
               <input 
                 placeholder="שם בעברית (למשל: דודה שרה)" 
-                value={newHeb} onChange={e => setNewHeb(e.target.value)} 
+                value={newHeb} 
+                onChange={e => setNewHeb(e.target.value)} 
                 style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}} 
               />
               <select 
-                value={newCat} onChange={e => setNewCat(e.target.value)} 
+                value={newCat} 
+                onChange={e => setNewCat(e.target.value)} 
                 style={{...localStyles.entryInput, height: '2.8em', fontSize: '0.9rem'}}
               >
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
@@ -147,19 +156,27 @@ export default function EntryStep({ initialCode, onJoin, onCreate, onSetName }: 
         </div>
 
         <div style={{...localStyles.inputGroup, marginTop: '10px'}}>
-          <input 
-            type="text" value={inputCode} 
-            onChange={(e) => setInputCode(e.target.value.toUpperCase())} 
-            placeholder="יש לך קוד חדר?" 
-            style={{...localStyles.entryInput, borderStyle: 'dashed'}} 
-          />
-          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>הצטרפות</button>
-          {initialCode && <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', textAlign: 'center', marginTop: '5px' }}>כניסה אוטומטית לחדר: {inputCode}</p>}
+          {!initialCode && (
+            <input 
+              type="text" 
+              value={inputCode} 
+              onChange={(e) => setInputCode(e.target.value.replace(/\D/g, '').slice(0, 4))} 
+              placeholder="קוד חדר (4 ספרות)" 
+              style={{...localStyles.entryInput, borderStyle: 'dashed'}} 
+            />
+          )}
+          <button onClick={() => startAction('join')} style={localStyles.primaryButton}>
+            {initialCode ? `הצטרפות לחדר ${initialCode}` : "הצטרפות למשחק"}
+          </button>
         </div>
       </div>
 
       <div style={localStyles.actionButtons}>
-        <button onClick={() => startAction('create')} style={localStyles.secondaryButton}>+ פתיחת חדר חדש</button>
+        {!initialCode && (
+          <button onClick={() => startAction('create')} style={localStyles.secondaryButton}>
+            + פתיחת חדר חדש
+          </button>
+        )}
       </div>
     </div>
   );
