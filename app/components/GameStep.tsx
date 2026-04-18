@@ -89,7 +89,6 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
                 {wordData.showImage && wordData.img && (
                   <div style={s.imgBox}><img src={wordData.img} alt="" style={s.img} /></div>
                 )}
-                {/* שם הדמות והקטגוריה בדיוק באותו גודל וסגנון, ללא אנגלית */}
                 <div style={wordData.showImage ? s.heb : s.hebL}>{wordData.word}</div>
                 <div style={wordData.showImage ? s.hebCat : s.hebCatL}>{wordData.category}</div>
               </>
@@ -118,11 +117,11 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
 }
 
 const s: any = {
-  layout: { display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh', padding: 'env(safe-area-inset-top) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto', position: 'relative' },
-  exitBtn: { position: 'absolute', top: '15px', left: '15px', width: '35px', height: '35px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: '60px', flexShrink: 0, paddingLeft: '45px' },
+  layout: { display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '100dvh', padding: 'calc(env(safe-area-inset-top, 0px) + 20px) 20px 20px', gap: '10px', maxWidth: '600px', margin: '0 auto', direction: 'rtl', boxSizing: 'border-box', overflowY: 'auto', position: 'relative' },
+  exitBtn: { position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 15px)', left: '15px', width: '35px', height: '35px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: '1px solid #ef4444', fontSize: '1.1rem', fontWeight: 'bold', cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '60px', flexShrink: 0, paddingLeft: '45px' },
   scoreBox: { backgroundColor: 'rgba(0, 242, 255, 0.15)', padding: '8px 15px', borderRadius: '15px', color: '#00f2ff', fontWeight: '900', fontSize: '1.2rem' },
-  timer: { fontSize: '2.5rem', fontWeight: '900' },
+  timer: { fontSize: '2.5rem', fontWeight: '900', lineHeight: '1' },
   icon: { background: 'none', border: 'none', color: 'white', fontSize: '1.8rem', cursor: 'pointer' },
   phaseHeader: { textAlign: 'center', backgroundColor: 'rgba(255,255,255,0.05)', padding: '10px', borderRadius: '15px', border: '1px solid rgba(0, 242, 255, 0.2)', flexShrink: 0 },
   phaseTitle: { color: '#00f2ff', fontWeight: 'bold', fontSize: '1rem' },
@@ -132,10 +131,10 @@ const s: any = {
   card: { width: '100%', minHeight: '30vh', backgroundColor: '#1a1d2e', borderRadius: '35px', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(0, 242, 255, 0.2)' },
   imgBox: { height: '180px', maxHeight: '20vh', marginBottom: '15px' },
   img: { height: '100%', objectFit: 'contain' },
-  heb: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
-  hebCat: { fontSize: '2.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '5px' }, 
-  hebL: { fontSize: '3.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
-  hebCatL: { fontSize: '3.5rem', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '10px' }, 
+  heb: { fontSize: 'clamp(2rem, 8vw, 2.5rem)', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
+  hebCat: { fontSize: 'clamp(1.5rem, 6vw, 2rem)', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '5px' }, 
+  hebL: { fontSize: 'clamp(2.5rem, 10vw, 3.5rem)', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: 'white', lineHeight: '1.1' }, 
+  hebCatL: { fontSize: 'clamp(1.8rem, 8vw, 2.5rem)', fontWeight: '900', textAlign: 'center', wordBreak: 'break-word', color: '#00f2ff', marginTop: '10px' }, 
   grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', paddingBottom: '15px', flexShrink: 0 },
   target: { height: '60px', border: '2px solid #00f2ff', borderRadius: '20px', fontSize: '1.1rem', fontWeight: '900', color: '#00f2ff', background: 'none', cursor: 'pointer' },
   pauseOverlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100dvh', backgroundColor: 'rgba(5, 8, 28, 0.95)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', boxSizing: 'border-box', direction: 'rtl' },
