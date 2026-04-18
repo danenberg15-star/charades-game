@@ -23,9 +23,14 @@ export default function FamilyAliasApp() {
   const roomDataRef = useRef(roomData);
   useEffect(() => { roomDataRef.current = roomData; }, [roomData]);
 
+  // פונקציה משופרת לבקשת השארת המסך דולק
   const requestWakeLock = async () => {
     if ('wakeLock' in navigator) {
       try {
+        if (wakeLockRef.current !== null) {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+        }
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
       } catch (err: any) {
         console.error(`Wake Lock Error: ${err.name}, ${err.message}`);
@@ -34,19 +39,31 @@ export default function FamilyAliasApp() {
   };
 
   useEffect(() => {
-    if (roomId && step >= 4) {
+    if (roomId && step >= 3) {
       requestWakeLock();
     }
+    
     const handleVisibilityChange = async () => {
-      if (wakeLockRef.current !== null && document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible') {
         await requestWakeLock();
       }
     };
+
+    // הטריק לאייפון: ניצול כל נגיעה במסך כדי לחדש את ה-Wake Lock עם הרשאות משתמש
+    const handleUserInteraction = () => {
+      requestWakeLock();
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('touchstart', handleUserInteraction, { passive: true });
+    document.addEventListener('click', handleUserInteraction, { passive: true });
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener('touchstart', handleUserInteraction);
+      document.removeEventListener('click', handleUserInteraction);
       if (wakeLockRef.current) {
-        wakeLockRef.current.release();
+        wakeLockRef.current.release().catch(() => {});
         wakeLockRef.current = null;
       }
     };
@@ -203,7 +220,6 @@ export default function FamilyAliasApp() {
                   poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] 
                 };
                 
-                // התיקון: טעינת המאגר הראשוני בכל חדר שמתחיל משחק (ולא רק בחדר הבדיקות)
                 if (!roomData.shuffledPools || roomData.shuffledPools.length === 0) {
                   const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
                   updates.shuffledPools = getInitialShuffledPools(allCustom);
