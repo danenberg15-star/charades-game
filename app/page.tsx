@@ -96,7 +96,7 @@ export default function FamilyAliasApp() {
 
       if (diff === 0 && canTriggerTransition) {
         let duration = roomData.currentPhase === 'A' ? 30 : 60;
-        if (roomId === "עומר") duration = 5;
+        if (roomId === "עומר") duration = 5; // שמירה על הטיימר המהיר בחדר הבדיקות
         updateRoom({ 
           step: 5, 
           timerEndsAt: Date.now() + (duration * 1000), 
@@ -202,10 +202,13 @@ export default function FamilyAliasApp() {
                   countdownEndsAt: Date.now() + 3000, 
                   poolIndex: 0, roundScore: 0, currentPhase: 'A', gameDeck: [] 
                 };
-                if (roomId === "עומר" && (!roomData.shuffledPools || roomData.shuffledPools.length === 0)) {
+                
+                // התיקון: טעינת המאגר הראשוני בכל חדר שמתחיל משחק (ולא רק בחדר הבדיקות)
+                if (!roomData.shuffledPools || roomData.shuffledPools.length === 0) {
                   const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
                   updates.shuffledPools = getInitialShuffledPools(allCustom);
                 }
+                
                 updateRoom(updates);
               }} 
               onExit={handleFullReset} 
