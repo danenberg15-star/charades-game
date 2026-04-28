@@ -229,7 +229,13 @@ export default function FamilyAliasApp() {
                 const firstPlayer = playersInTeam0[0] || roomData.players[0]; 
                 const firstGlobalIdx = roomData.players.findIndex((p: any) => p.id === firstPlayer.id);
 
+                // איסוף של כל המילים האישיות שהוזנו
                 const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
+
+                // מעקף לפונקציית הערבוב: מניעת דריסה של מילים מאותה קטגוריה!
+                const defaultPool = getInitialShuffledPools([]); // שולף רק את המאגר הכללי
+                const customPool = shuffleArray([...allCustom]); // מערבב את המילים האישיות בנפרד
+                const safeCombinedPool = [...customPool, ...defaultPool]; // דוחף את כל המילים האישיות בבטחה לראש החפיסה
 
                 const updates: any = { 
                   step: 4, 
@@ -241,8 +247,7 @@ export default function FamilyAliasApp() {
                   currentTeamIdx: 0,
                   currentTurnIdx: firstGlobalIdx,
                   teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
-                  // התיקון: תמיד לבנות מחדש את החפיסה כדי שהשמות החדשים ייכנסו פנימה
-                  shuffledPools: getInitialShuffledPools(allCustom)
+                  shuffledPools: safeCombinedPool // שימוש בחפיסה הבטוחה
                 };
                 
                 updateRoom(updates);
