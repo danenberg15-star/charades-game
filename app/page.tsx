@@ -81,6 +81,7 @@ export default function FamilyAliasApp() {
   const isHost = roomData?.players?.[0]?.id === userId;
   const canTriggerTransition = isIDescriber || (isBot && isHost);
 
+  // לוגיקת טיימר משחק - כולל זריקת מילים בסיום תור
   useEffect(() => {
     if (!roomData?.timerEndsAt || roomData.isPaused || step !== 5) return;
 
@@ -91,18 +92,31 @@ export default function FamilyAliasApp() {
 
       if (diff === 0 && canTriggerTransition) {
         const updates: any = { step: 6, phaseEnded: null };
-        
-        const pool = [...(roomData.shuffledPools || [])];
-        if (pool.length > 0) {
-          if (roomData.currentPhase === 'A') {
-            updates.poolIndex = increment(1);
+        const isPhaseA = roomData.currentPhase === 'A';
+        const currentPlayer = roomData.players[roomData.currentTurnIdx];
+        const hasPending = currentPlayer?.pendingWords && currentPlayer.pendingWords.length > 0;
+
+        if (isPhaseA) {
+          if (hasPending) {
+            // זריקת המילה האישית אם נגמר הזמן (דילוג אוטומטי)
+            const updatedPlayers = [...roomData.players];
+            updatedPlayers[roomData.currentTurnIdx] = {
+              ...currentPlayer,
+              pendingWords: currentPlayer.pendingWords.slice(1)
+            };
+            updates.players = updatedPlayers;
           } else {
-            if (roomData.poolIndex < pool.length - 1) {
-              const currentWord = pool[roomData.poolIndex];
-              pool.splice(roomData.poolIndex, 1);
-              pool.push(currentWord);
-              updates.shuffledPools = pool;
-            }
+            // זריקת מילה מהמאגר הכללי
+            updates.poolIndex = increment(1);
+          }
+        } else {
+          // שלבים ב' ו-ג': דחיפת המילה חזרה לסוף החפיסה
+          const pool = [...(roomData.shuffledPools || [])];
+          if (pool.length > 0 && roomData.poolIndex < pool.length - 1) {
+            const currentWord = pool[roomData.poolIndex];
+            pool.splice(roomData.poolIndex, 1);
+            pool.push(currentWord);
+            updates.shuffledPools = pool;
           }
         }
         
@@ -110,7 +124,7 @@ export default function FamilyAliasApp() {
       }
     }, 100); 
     return () => clearInterval(interval);
-  }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom, roomData?.shuffledPools, roomData?.poolIndex, roomData?.currentPhase]);
+  }, [roomData?.timerEndsAt, roomData?.isPaused, step, canTriggerTransition, updateRoom, roomData?.shuffledPools, roomData?.poolIndex, roomData?.currentPhase, roomData?.players, roomData?.currentTurnIdx]);
 
   useEffect(() => {
     if (!roomData?.countdownEndsAt || step !== 4) return;
@@ -137,13 +151,25 @@ export default function FamilyAliasApp() {
 
   const handleScoreAction = (targetName: string, points: number = 1) => {
     if (!roomData || !currentP || roomData.isPaused) return;
+    
     const describerTeam = roomData.teamNames[currentP.teamIdx];
+    const isPhaseA = roomData.currentPhase === 'A';
+    const hasPending = currentP.pendingWords && currentP.pendingWords.length > 0;
     const pool = [...(roomData.shuffledPools || [])];
-    const currentWord = pool[roomData.poolIndex];
+
+    const currentWord = (isPhaseA && hasPending)
+      ? currentP.pendingWords[0]
+      : pool[roomData.poolIndex % (pool.length || 1)];
 
     if (targetName === "SKIP") {
-      if (roomData.currentPhase === 'A') {
-        updateRoom({ poolIndex: increment(1) });
+      if (isPhaseA) {
+        if (hasPending) {
+          const updatedPlayers = [...roomData.players];
+          updatedPlayers[roomData.currentTurnIdx] = { ...currentP, pendingWords: currentP.pendingWords.slice(1) };
+          updateRoom({ players: updatedPlayers });
+        } else {
+          updateRoom({ poolIndex: increment(1) });
+        }
       } else {
         pool.splice(roomData.poolIndex, 1);
         pool.push(currentWord);
@@ -156,15 +182,23 @@ export default function FamilyAliasApp() {
       return;
     }
 
-    if (roomData.currentPhase === 'A') {
+    if (isPhaseA) {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
       const updates: any = {
         [`totalScores.${targetName}`]: increment(1),
-        poolIndex: increment(1),
         roundScore: increment(1),
         gameDeck: updatedDeck
       };
+
+      if (hasPending) {
+        const updatedPlayers = [...roomData.players];
+        updatedPlayers[roomData.currentTurnIdx] = { ...currentP, pendingWords: currentP.pendingWords.slice(1) };
+        updates.players = updatedPlayers;
+      } else {
+        updates.poolIndex = increment(1);
+      }
+
       if (updatedDeck.length >= nPlayers * 5) {
         Object.assign(updates, { 
           poolIndex: 0, 
@@ -229,13 +263,11 @@ export default function FamilyAliasApp() {
                 const firstPlayer = playersInTeam0[0] || roomData.players[0]; 
                 const firstGlobalIdx = roomData.players.findIndex((p: any) => p.id === firstPlayer.id);
 
-                // איסוף של כל המילים האישיות שהוזנו
-                const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
-
-                // מעקף לפונקציית הערבוב: מניעת דריסה של מילים מאותה קטגוריה!
-                const defaultPool = getInitialShuffledPools([]); // שולף רק את המאגר הכללי
-                const customPool = shuffleArray([...allCustom]); // מערבב את המילים האישיות בנפרד
-                const safeCombinedPool = [...customPool, ...defaultPool]; // דוחף את כל המילים האישיות בבטחה לראש החפיסה
+                // יצירת רשימת מילים ממתינות לכל שחקן על בסיס מה שהוסיף
+                const updatedPlayers = roomData.players.map((p: any) => ({
+                  ...p,
+                  pendingWords: [...(p.customWords || [])]
+                }));
 
                 const updates: any = { 
                   step: 4, 
@@ -247,7 +279,8 @@ export default function FamilyAliasApp() {
                   currentTeamIdx: 0,
                   currentTurnIdx: firstGlobalIdx,
                   teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
-                  shuffledPools: safeCombinedPool // שימוש בחפיסה הבטוחה
+                  players: updatedPlayers,
+                  shuffledPools: getInitialShuffledPools([]) // מאגר כללי בלבד
                 };
                 
                 updateRoom(updates);

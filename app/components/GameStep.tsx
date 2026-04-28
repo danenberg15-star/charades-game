@@ -16,14 +16,23 @@ export default function GameStep({ roomData, userId, targets, updateRoom, handle
     const difficulty = roomData.difficulty || "easy";
     const pool = roomData.shuffledPools || [];
     const index = roomData.poolIndex || 0;
-    const currentWord = pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" };
+    
+    // הלוגיקה החדשה: האם אנחנו בשלב א' ויש לשחקן הנוכחי מילים אישיות שעוד לא שוחקו?
+    const isPhaseA = roomData.currentPhase === 'A';
+    const hasPending = currentP?.pendingWords && currentP.pendingWords.length > 0;
+
+    // שליפת המילה: אם יש לו מילים אישיות - קח את הראשונה שלו. אם לא - קח מהמאגר הכללי
+    const currentWord = (isPhaseA && hasPending)
+      ? currentP.pendingWords[0]
+      : (pool[index % (pool.length || 1)] || { word: "טוען...", en: "", category: "" });
+
     const showImage = difficulty === "easy";
     
     return { 
       ...currentWord,
       showImage 
     };
-  }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty]);
+  }, [roomData.poolIndex, roomData.shuffledPools, roomData.difficulty, roomData.currentPhase, currentP]);
 
   const phaseInfo = useMemo(() => {
     switch (roomData.currentPhase) {
