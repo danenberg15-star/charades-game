@@ -81,7 +81,6 @@ export default function FamilyAliasApp() {
   const isHost = roomData?.players?.[0]?.id === userId;
   const canTriggerTransition = isIDescriber || (isBot && isHost);
 
-  // לוגיקת סנכרון טיימר משחק עם הסטת מילה בסיום תור
   useEffect(() => {
     if (!roomData?.timerEndsAt || roomData.isPaused || step !== 5) return;
 
@@ -98,7 +97,6 @@ export default function FamilyAliasApp() {
           if (roomData.currentPhase === 'A') {
             updates.poolIndex = increment(1);
           } else {
-            // בשלבים ב' ו-ג': דחיפת המילה לסוף אם היא לא המילה האחרונה בחפיסה
             if (roomData.poolIndex < pool.length - 1) {
               const currentWord = pool[roomData.poolIndex];
               pool.splice(roomData.poolIndex, 1);
@@ -123,7 +121,7 @@ export default function FamilyAliasApp() {
       setLocalCountdown(diff);
 
       if (diff === 0 && canTriggerTransition) {
-        let duration = roomData.currentPhase === 'A' ? 30 : 60;
+        let duration = 60; // שינוי ל-60 שניות לכל השלבים כולל שלב א'
         if (roomId === "עומר") duration = 5; 
         updateRoom({ 
           step: 5, 
@@ -162,7 +160,7 @@ export default function FamilyAliasApp() {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
       const updates: any = {
-        [`totalScores.${describerTeam}`]: increment(1),
+        // שינוי: נקודה 1 בלבד לקבוצה המנחשת, כיוון שרק הם רשאים לנחש עכשיו
         [`totalScores.${targetName}`]: increment(1),
         poolIndex: increment(1),
         roundScore: increment(1),
@@ -203,7 +201,8 @@ export default function FamilyAliasApp() {
     }
   };
 
-  const gameTargets = roomData?.currentPhase === 'A' || step === 8
+  // שינוי: קביעת הכפתורים למטה. כעת בשלב א' מופיע רק כפתור הקבוצה המנחשת (בדיוק כמו בשלבים ב' ו-ג')
+  const gameTargets = step === 8
     ? (roomData.teamNames.slice(0, roomData.numTeams) || [])
     : [roomData?.teamNames[currentP?.teamIdx]];
 

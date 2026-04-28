@@ -11,8 +11,8 @@ export default function RulesStep({ onStart }: { onStart: () => void }) {
           <section style={s.section}>
             <h2 style={s.subTitle}>1. שלב א': בניית החפיסה 🎴</h2>
             <p style={s.text}>
-              • חצי דקה לכל שחקן לתאר כמה שיותר סלבס.<br/>
-              • <b>כולם מנחשים!</b> נקודה למנחש ונקודה למתאר.<br/>
+              • דקה לכל שחקן לתאר כמה שיותר סלבס.<br/>
+              • <b>רק הקבוצה של המתאר מנחשת!</b> ניחוש נכון = +1.<br/>
               • מסתיים כשנאספו 5 סלבס לכל משתתף.
             </p>
           </section>
