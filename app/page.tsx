@@ -229,6 +229,8 @@ export default function FamilyAliasApp() {
                 const firstPlayer = playersInTeam0[0] || roomData.players[0]; 
                 const firstGlobalIdx = roomData.players.findIndex((p: any) => p.id === firstPlayer.id);
 
+                const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
+
                 const updates: any = { 
                   step: 4, 
                   countdownEndsAt: Date.now() + 3000, 
@@ -238,13 +240,10 @@ export default function FamilyAliasApp() {
                   gameDeck: [],
                   currentTeamIdx: 0,
                   currentTurnIdx: firstGlobalIdx,
-                  teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 }
+                  teamPlayerIndices: { 0: 0, 1: 0, 2: 0, 3: 0 },
+                  // התיקון: תמיד לבנות מחדש את החפיסה כדי שהשמות החדשים ייכנסו פנימה
+                  shuffledPools: getInitialShuffledPools(allCustom)
                 };
-                
-                if (!roomData.shuffledPools || roomData.shuffledPools.length === 0) {
-                  const allCustom = roomData.players.reduce((acc: any[], p: any) => [...acc, ...(p.customWords || [])], []);
-                  updates.shuffledPools = getInitialShuffledPools(allCustom);
-                }
                 
                 updateRoom(updates);
               }} 
