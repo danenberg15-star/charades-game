@@ -43,8 +43,8 @@ export function useGameState() {
   };
 
   const handleFullReset = async () => { 
-    if (roomId === "עומר" || localStorage.getItem("alias_roomId") === "עומר") {
-      try { await deleteDoc(doc(db, "rooms", "עומר")); } catch (e) { console.error("Error clearing QA room", e); }
+    if (roomId === "9999" || localStorage.getItem("alias_roomId") === "9999") {
+      try { await deleteDoc(doc(db, "rooms", "9999")); } catch (e) { console.error("Error clearing QA room", e); }
     }
     localStorage.clear(); 
     window.location.href = '/'; 
@@ -63,7 +63,6 @@ export function useGameState() {
       currentPhase: 'A', poolIndex: 0, shuffledPools: [], gameDeck: []
     };
     await setDoc(doc(db, "rooms", id), data);
-    // אופטימיזציה: עדכון State מקומי מיד כדי לחסוך את הדיליי של השרת
     setRoomData(data);
     localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name);
     setRoomId(id); setStep(3);
@@ -80,10 +79,11 @@ export function useGameState() {
         const snap = await transaction.get(roomRef);
         
         if (!snap.exists()) {
-          if (id === "עומר") {
-            const qp = [{ id: userId, name: payload.name || "עומר", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
+          // כאן החזרתי את הלוגיקה המקורית של הבוטים שהייתה תחת "עומר", עכשיו עם "9999"
+          if (id === "9999") {
+            const qp = [{ id: userId, name: payload.name || "בודק QA", teamIdx: 0, customWords: payload.customWords }, ...Array(5).fill(0).map((_, i) => ({ id: `d_${i}`, name: `שחקן ${i+2}`, teamIdx: 1, customWords: [] }))];
             finalData = { 
-              id: "עומר", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
+              id: "9999", step: 3, createdAt: Date.now(), lastActivity: Date.now(), 
               gameMode: "team", numTeams: 2, difficulty: "easy", 
               players: qp, teamNames: ["קבוצה א'", "קבוצה ב'"], totalScores: {}, roundScore: 0, 
               isPaused: false, currentTurnIdx: 0, currentTeamIdx: 0, 
@@ -114,9 +114,8 @@ export function useGameState() {
         }
       });
 
-      // אופטימיזציה: עדכון הנתונים מקומית מיד לאחר הצלחת הטרנזקציה למעבר חלק
       if (finalData) setRoomData(finalData);
-      localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name || "עומר");
+      localStorage.setItem("alias_roomId", id); localStorage.setItem("alias_userName", payload.name || "בודק QA");
       setRoomId(id); setStep(targetStep); 
     } catch (error: any) {
       if (error.message === "ROOM_NOT_FOUND") alert("חדר לא נמצא");

@@ -122,7 +122,7 @@ export default function FamilyAliasApp() {
 
       if (diff === 0 && canTriggerTransition) {
         let duration = 60; 
-        if (roomId === "0000") duration = 5; // קוד ה-QA החדש (מספרי בלבד)
+        if (roomId === "9999") duration = 5; 
         updateRoom({ 
           step: 5, 
           timerEndsAt: Date.now() + (duration * 1000), 
