@@ -121,8 +121,8 @@ export default function FamilyAliasApp() {
       setLocalCountdown(diff);
 
       if (diff === 0 && canTriggerTransition) {
-        let duration = 60; // שינוי ל-60 שניות לכל השלבים כולל שלב א'
-        if (roomId === "עומר") duration = 5; 
+        let duration = 60; 
+        if (roomId === "0000") duration = 5; // קוד ה-QA החדש (מספרי בלבד)
         updateRoom({ 
           step: 5, 
           timerEndsAt: Date.now() + (duration * 1000), 
@@ -160,7 +160,6 @@ export default function FamilyAliasApp() {
       const updatedDeck = [...(roomData.gameDeck || []), currentWord];
       const nPlayers = roomData.players.length;
       const updates: any = {
-        // שינוי: נקודה 1 בלבד לקבוצה המנחשת, כיוון שרק הם רשאים לנחש עכשיו
         [`totalScores.${targetName}`]: increment(1),
         poolIndex: increment(1),
         roundScore: increment(1),
@@ -201,7 +200,6 @@ export default function FamilyAliasApp() {
     }
   };
 
-  // שינוי: קביעת הכפתורים למטה. כעת בשלב א' מופיע רק כפתור הקבוצה המנחשת (בדיוק כמו בשלבים ב' ו-ג')
   const gameTargets = step === 8
     ? (roomData.teamNames.slice(0, roomData.numTeams) || [])
     : [roomData?.teamNames[currentP?.teamIdx]];
